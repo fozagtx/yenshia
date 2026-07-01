@@ -2,10 +2,10 @@
   "project": "yenshia",
   "scope": "fawuzantechs-projects",
   "target": "production",
-  "deploymentId": "dpl_CgnN7jUxpCcAhTzZ3nhpgY2sKKUW",
-  "deploymentUrl": "https://yenshia-mkzmmftdz-fawuzantechs-projects.vercel.app",
+  "deploymentId": "dpl_EVSFNCmzUwbjB7CF8n3hLjLL8P1P",
+  "deploymentUrl": "https://yenshia-ikews20qs-fawuzantechs-projects.vercel.app",
   "productionUrl": "https://yenshia.vercel.app",
-  "inspectorUrl": "https://vercel.com/fawuzantechs-projects/yenshia/CgnN7jUxpCcAhTzZ3nhpgY2sKKUW",
+  "inspectorUrl": "https://vercel.com/fawuzantechs-projects/yenshia/EVSFNCmzUwbjB7CF8n3hLjLL8P1P",
   "stellarRpcUrl": "https://soroban-testnet.stellar.org",
   "stellarNetworkPassphrase": "Test SDF Network ; September 2015"
 }
