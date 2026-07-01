@@ -16,6 +16,7 @@ export const useSendLocation = ({ enabled = true, linkPublicKey, recipientPublic
   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
   const [isGeolocationAvailable, setIsGeolocationAvailable] = useState(true);
   const [isGeolocationEnabled, setIsGeolocationEnabled] = useState(false);
+  const [locationError, setLocationError] = useState<Error | null>(null);
   const [sendError, setSendError] = useState<Error | null>(null);
   const [lastSentAt, setLastSentAt] = useState<number | null>(null);
 
@@ -35,6 +36,7 @@ export const useSendLocation = ({ enabled = true, linkPublicKey, recipientPublic
     const watchId = navigator.geolocation.watchPosition(
       position => {
         setIsGeolocationEnabled(true);
+        setLocationError(null);
         setSendError(null);
         setCoords({
           latitude: position.coords.latitude,
@@ -43,7 +45,7 @@ export const useSendLocation = ({ enabled = true, linkPublicKey, recipientPublic
       },
       error => {
         setIsGeolocationEnabled(false);
-        setSendError(error instanceof Error ? error : new Error(error.message || "Location access failed."));
+        setLocationError(error instanceof Error ? error : new Error(error.message || "Location access failed."));
       },
       {
         enableHighAccuracy: true,
@@ -107,6 +109,7 @@ export const useSendLocation = ({ enabled = true, linkPublicKey, recipientPublic
     isGeolocationAvailable,
     isGeolocationEnabled,
     lastSentAt,
+    locationError,
     relayError,
     relayReady,
     relayStatus,

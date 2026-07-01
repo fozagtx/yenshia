@@ -60,13 +60,7 @@ const finishErrorMessage = (message: string) => {
   return message;
 };
 
-const locationErrorMessage = (message: string) => {
-  if (message.toLowerCase().includes("relay")) {
-    return "Still connecting. Keep this page open.";
-  }
-
-  return message;
-};
+const locationErrorMessage = (message: string) => message;
 
 const ShareLocationPage: NextPage = () => {
   const router = useRouter();
@@ -89,7 +83,6 @@ const ShareLocationPage: NextPage = () => {
     coords: otherCoords,
     location: peerLocation,
     receiveError,
-    relayError: receiveRelayError,
   } = useReceiveLocation({
     enabled: privateSharingReady,
     expectedSenderPublicKey: isLinkOwner ? undefined : publicKey,
@@ -108,8 +101,7 @@ const ShareLocationPage: NextPage = () => {
     coords,
     isGeolocationAvailable,
     isGeolocationEnabled,
-    relayError: sendRelayError,
-    sendError,
+    locationError: locationAccessError,
   } = useSendLocation({
     enabled: locationRequested,
     linkPublicKey: publicKey,
@@ -221,7 +213,7 @@ const ShareLocationPage: NextPage = () => {
     );
   }
 
-  const locationError = sendError || receiveError || sendRelayError || receiveRelayError;
+  const locationError = locationAccessError || receiveError;
   const hasOwnLocation = !!coords;
   const hasPeerLocation = !!otherCoords && canSendToPeer;
   const hasLocationPair = hasOwnLocation && hasPeerLocation;
