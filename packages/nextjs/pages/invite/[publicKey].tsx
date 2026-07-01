@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import type { NextPage } from "next";
@@ -13,6 +13,8 @@ const InvitePage: NextPage = () => {
   const hasMounted = useHasMounted();
   const isValidInviteKey = !!inviterPublicKey && /^0x04[0-9a-fA-F]{128}$/.test(inviterPublicKey);
   const { address, isConnecting, isConnected } = useStellarWallet();
+  const [locationError, setLocationError] = useState<string | null>(null);
+  const [requestingLocation, setRequestingLocation] = useState(false);
 
   useEffect(() => {
     if (hasMounted && router.isReady && isValidInviteKey && (!address || !isConnected)) {
@@ -52,6 +54,33 @@ const InvitePage: NextPage = () => {
     );
   }
 
+  const onShareLocation = () => {
+    if (!isValidInviteKey || !inviterPublicKey) return;
+
+    setLocationError(null);
+
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      setLocationError("Location is not available in this browser.");
+      return;
+    }
+
+    setRequestingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      () => {
+        void router.push(`/chat/${inviterPublicKey}?share=1`);
+      },
+      error => {
+        setRequestingLocation(false);
+        setLocationError(error.message || "Turn on location access.");
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 5000,
+        timeout: 10000,
+      },
+    );
+  };
+
   return (
     <>
       <MetaHeader title="Yenshia | Share Location" />
@@ -60,12 +89,18 @@ const InvitePage: NextPage = () => {
           Share your location
         </h1>
         <p className="muted-copy text-center max-w-md leading-7">
-          You have been invited to share location. Start sharing or decline.
+          Press once. Your browser will ask for location access.
         </p>
+        {locationError && <p className="text-center text-sm text-[var(--error-red)]">{locationError}</p>}
         <div className="flex flex-col gap-y-4 items-center justify-center w-full mt-4">
-          <Link href={`/chat/${inviterPublicKey}`}>
-            <Button className="min-w-[15rem]">Share location</Button>
-          </Link>
+          <Button
+            className="min-w-[15rem]"
+            loading={requestingLocation}
+            disabled={requestingLocation}
+            onClick={onShareLocation}
+          >
+            Share location
+          </Button>
           <Link href="/">
             <Button color="secondary" className="min-w-[15rem]">
               Decline

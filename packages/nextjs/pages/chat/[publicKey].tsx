@@ -78,6 +78,7 @@ const ShareLocationPage: NextPage = () => {
   const { address, signTransaction } = useStellarWallet();
   const { derivationError, derivedAccount, derivedAccountReady, deriveAccount, derivingAccount } = useDerivedAccount();
   const [locationRequested, setLocationRequested] = useState(false);
+  const shareFromInvite = router.query.share === "1";
   const [proofResult, setProofResult] = useState<SubmitProofApiResponse | null>(null);
   const sharePageReady = !!address && !!publicKey;
   const privateSharingReady = sharePageReady && derivedAccountReady;
@@ -185,6 +186,12 @@ const ShareLocationPage: NextPage = () => {
     }
   }, [address, hasMounted, publicKey, router]);
 
+  useEffect(() => {
+    if (router.isReady && shareFromInvite) {
+      setLocationRequested(true);
+    }
+  }, [router.isReady, shareFromInvite]);
+
   if (!hasMounted) {
     return null;
   }
@@ -248,7 +255,9 @@ const ShareLocationPage: NextPage = () => {
         ) : (
           <div className="grid min-h-[calc(100dvh-8.5rem)] place-items-center px-5 pb-28 pt-10 text-center sm:min-h-[34rem]">
             <div className="max-w-sm space-y-4">
-              <h1 className="font-serif text-3xl text-[var(--navy)] sm:text-4xl">Share location</h1>
+              <h1 className="font-serif text-3xl text-[var(--navy)] sm:text-4xl">
+                {locationRequested ? "Waiting for location" : "Share location"}
+              </h1>
               <p className={locationError ? "leading-7 text-[var(--error-red)]" : "muted-copy leading-7"}>
                 {shareMessage}
               </p>
