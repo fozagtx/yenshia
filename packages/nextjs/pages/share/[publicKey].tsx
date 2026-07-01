@@ -30,6 +30,19 @@ const createParticipantId = () => {
   throw new Error("Secure browser identity is not available.");
 };
 
+type LocationCoordinates = {
+  latitude: number;
+  longitude: number;
+};
+
+const formatCoordinate = (value: number) => value.toFixed(5);
+
+const formatLocationCoordinates = (position?: LocationCoordinates | null) => {
+  if (!position) return "Waiting";
+
+  return `${formatCoordinate(position.latitude)}, ${formatCoordinate(position.longitude)}`;
+};
+
 const ShareLocationPage: NextPage = () => {
   const router = useRouter();
   const routePublicKey = router.query.publicKey?.toString();
@@ -229,6 +242,8 @@ const ShareLocationPage: NextPage = () => {
     ? "Sending"
     : "Waiting";
   const peerStatusText = hasPeerLocation ? "Pinned on map" : "Waiting for other person";
+  const ownLocationText = formatLocationCoordinates(coords);
+  const peerLocationText = hasPeerLocation ? formatLocationCoordinates(otherCoords) : "Waiting";
 
   return (
     <>
@@ -311,6 +326,21 @@ const ShareLocationPage: NextPage = () => {
           </div>
         )}
       </section>
+
+      {hasOwnLocation && (
+        <div className="location-summary-strip mt-2" aria-label="Shared location coordinates">
+          <div className="location-summary-item">
+            <span className="location-summary-dot location-summary-dot--self" aria-hidden="true" />
+            <span className="location-summary-name">{currentDisplayName}</span>
+            <span className="location-summary-coords">{ownLocationText}</span>
+          </div>
+          <div className="location-summary-item">
+            <span className="location-summary-dot location-summary-dot--peer" aria-hidden="true" />
+            <span className="location-summary-name">{peerDisplayName}</span>
+            <span className="location-summary-coords">{peerLocationText}</span>
+          </div>
+        </div>
+      )}
     </>
   );
 };
