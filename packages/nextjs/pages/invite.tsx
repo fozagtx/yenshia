@@ -100,7 +100,7 @@ const InvitePage: NextPage = () => {
             </CopyButton>
 
             <Link href={`/chat/${derivedAccount.publicKey}`} className="inline-flex">
-              <Button color="secondary">Open my session</Button>
+              <Button color="secondary">Open map</Button>
             </Link>
           </div>
         ) : (

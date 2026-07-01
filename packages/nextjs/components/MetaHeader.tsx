@@ -15,7 +15,7 @@ const baseUrl = process.env.NEXT_PUBLIC_VERCEL_URL ? `https://${process.env.NEXT
 
 export const MetaHeader = ({
   title = "Yenshia",
-  description = "Private location sharing with Stellar wallet-gated sessions",
+  description = "Private location sharing with wallet-gated access",
   image = "thumbnail.jpg",
   twitterCard = "summary_large_image",
   children,

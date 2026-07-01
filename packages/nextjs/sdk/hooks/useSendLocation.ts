@@ -5,14 +5,14 @@ import { generateEncryptionClient, useDerivedAccount } from "~~/sdk/crypto";
 import { useStellarWallet } from "~~/sdk/stellar-wallet";
 
 interface UseSendLocationParams {
+  linkPublicKey?: `0x${string}`;
   recipientPublicKey?: `0x${string}`;
-  sessionPublicKey?: `0x${string}`;
 }
 
-export const useSendLocation = ({ recipientPublicKey, sessionPublicKey }: UseSendLocationParams) => {
+export const useSendLocation = ({ linkPublicKey, recipientPublicKey }: UseSendLocationParams) => {
   const { address } = useStellarWallet();
   const { derivedAccount } = useDerivedAccount();
-  const canShareLocation = !!address && !!recipientPublicKey && !!sessionPublicKey && !!derivedAccount;
+  const canShareLocation = !!address && !!linkPublicKey && !!recipientPublicKey && !!derivedAccount;
   const [sendError, setSendError] = useState<Error | null>(null);
   const [lastSentAt, setLastSentAt] = useState<number | null>(null);
 
@@ -27,7 +27,7 @@ export const useSendLocation = ({ recipientPublicKey, sessionPublicKey }: UseSen
   });
 
   useEffect(() => {
-    if (!address || !coords || !derivedAccount || !recipientPublicKey || !sessionPublicKey) return;
+    if (!address || !coords || !derivedAccount || !linkPublicKey || !recipientPublicKey) return;
 
     let stopped = false;
 
@@ -35,11 +35,11 @@ export const useSendLocation = ({ recipientPublicKey, sessionPublicKey }: UseSen
       const message = {
         latitude: coords.latitude,
         longitude: coords.longitude,
+        linkPublicKey,
         recipientPublicKey,
         senderPublicKey: derivedAccount.publicKey,
         senderAddress: address,
         sentAt: Date.now(),
-        sessionPublicKey,
       };
 
       const encryptionClient = generateEncryptionClient(recipientPublicKey);
@@ -69,7 +69,7 @@ export const useSendLocation = ({ recipientPublicKey, sessionPublicKey }: UseSen
       stopped = true;
       clearInterval(intervalId);
     };
-  }, [send, coords, address, recipientPublicKey, sessionPublicKey, derivedAccount]);
+  }, [send, coords, address, linkPublicKey, recipientPublicKey, derivedAccount]);
 
   return {
     coords,

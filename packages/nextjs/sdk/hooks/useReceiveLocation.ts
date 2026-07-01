@@ -9,11 +9,11 @@ type HexPublicKey = `0x${string}`;
 type ReceivedLocation = {
   latitude: number;
   longitude: number;
+  linkPublicKey: HexPublicKey;
   recipientPublicKey: HexPublicKey;
   senderAddress: string;
   senderPublicKey: HexPublicKey;
   sentAt: number;
-  sessionPublicKey: HexPublicKey;
 };
 
 const isHexPublicKey = (value: unknown): value is HexPublicKey =>
@@ -28,9 +28,9 @@ const parseLocationPayload = (payload: unknown): ReceivedLocation | null => {
     typeof candidate.longitude !== "number" ||
     typeof candidate.senderAddress !== "string" ||
     typeof candidate.sentAt !== "number" ||
+    !isHexPublicKey(candidate.linkPublicKey) ||
     !isHexPublicKey(candidate.recipientPublicKey) ||
-    !isHexPublicKey(candidate.senderPublicKey) ||
-    !isHexPublicKey(candidate.sessionPublicKey)
+    !isHexPublicKey(candidate.senderPublicKey)
   ) {
     return null;
   }
@@ -45,11 +45,11 @@ const parseLocationPayload = (payload: unknown): ReceivedLocation | null => {
 export const useReceiveLocation = ({
   enabled = true,
   expectedSenderPublicKey,
-  sessionPublicKey,
+  linkPublicKey,
 }: {
   enabled?: boolean;
   expectedSenderPublicKey?: HexPublicKey;
-  sessionPublicKey?: HexPublicKey;
+  linkPublicKey?: HexPublicKey;
 } = {}) => {
   const { data: node, error: relayError, status: relayStatus } = useNode();
   const { derivedAccount } = useDerivedAccount();
@@ -59,7 +59,7 @@ export const useReceiveLocation = ({
   const [receiveError, setReceiveError] = useState<Error | null>(null);
 
   useEffect(() => {
-    if (!enabled || !node || !derivedAccountReady || !derivedAccount || !sessionPublicKey) return;
+    if (!enabled || !node || !derivedAccountReady || !derivedAccount || !linkPublicKey) return;
 
     const callback = async (wakuMessage: DecodedMessage) => {
       if (!wakuMessage.payload) return;
@@ -75,7 +75,7 @@ export const useReceiveLocation = ({
         }
 
         if (parsedPayload.recipientPublicKey.toLowerCase() !== derivedAccount.publicKey.toLowerCase()) return;
-        if (parsedPayload.sessionPublicKey.toLowerCase() !== sessionPublicKey.toLowerCase()) return;
+        if (parsedPayload.linkPublicKey.toLowerCase() !== linkPublicKey.toLowerCase()) return;
         if (
           expectedSenderPublicKey &&
           parsedPayload.senderPublicKey.toLowerCase() !== expectedSenderPublicKey.toLowerCase()
@@ -87,7 +87,7 @@ export const useReceiveLocation = ({
         setReceiveError(null);
         setLocation(parsedPayload);
       } catch {
-        // Messages for other Yenshia sessions share the same public Waku topic and will not decrypt here.
+        // Messages for other Yenshia links share the same public Waku topic and will not decrypt here.
       }
     };
 
@@ -114,7 +114,7 @@ export const useReceiveLocation = ({
       cancelled = true;
       unsubscribe?.();
     };
-  }, [enabled, node, decryptMessage, derivedAccountReady, derivedAccount, expectedSenderPublicKey, sessionPublicKey]);
+  }, [enabled, node, decryptMessage, derivedAccountReady, derivedAccount, expectedSenderPublicKey, linkPublicKey]);
 
   return {
     coords: location ? { latitude: location.latitude, longitude: location.longitude } : null,

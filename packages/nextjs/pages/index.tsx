@@ -16,12 +16,12 @@ const steps = [
   },
   {
     title: "Share live location",
-    copy: "Each person joins from their own phone and shares location inside the session.",
+    copy: "Each person joins from their own phone and shares location privately.",
     icon: MapPinIcon,
   },
   {
-    title: "Keep the session private",
-    copy: "Location details stay inside the shared session flow.",
+    title: "Keep it private",
+    copy: "Location details stay between the two phones.",
     icon: ShieldCheckIcon,
   },
 ];
@@ -33,15 +33,15 @@ const faqs = [
   },
   {
     question: "How do I share location?",
-    answer: "Create a private link, connect your wallet, and share location inside the session.",
+    answer: "Create a private link, connect your wallet, and share location.",
   },
   {
     question: "What happens after I open the app?",
-    answer: "You create or join a private session and follow the gated flow from there.",
+    answer: "You create or join a private link and follow the simple flow from there.",
   },
   {
     question: "Where do I start?",
-    answer: "Use the main button here, then continue into the session flow.",
+    answer: "Use the main button here, then continue to sharing.",
   },
 ];
 
@@ -76,7 +76,7 @@ const HomePage: NextPage = () => {
               Yenshia
             </h1>
             <p className="max-w-[36rem] text-base leading-7 text-[var(--neutral-muted)] sm:text-lg sm:leading-8 md:text-xl md:leading-9">
-              A private and safe way for two people to share location inside a private session.
+              A private and safe way for two people to share location.
             </p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -85,7 +85,7 @@ const HomePage: NextPage = () => {
                 href="/invite"
                 className="inline-flex h-11 w-full items-center justify-center rounded-2xl border border-white/20 bg-[image:var(--cta-gradient)] px-6 text-sm font-semibold text-white sm:w-auto"
               >
-                Start session
+                Start sharing
               </Link>
             ) : (
               <StellarWalletButton
@@ -107,7 +107,7 @@ const HomePage: NextPage = () => {
         <div className="relative grid aspect-[1.16/1] w-full place-items-center overflow-hidden rounded-3xl bg-white/40 shadow-[var(--shadow-card)] md:aspect-[1.2/1]">
           <Image
             src="/illustrations/yenshia-illustration-location.png"
-            alt="People sharing location in a private Yenshia session"
+            alt="People sharing location with Yenshia"
             width={697}
             height={461}
             priority

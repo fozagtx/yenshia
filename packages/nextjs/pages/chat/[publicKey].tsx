@@ -40,28 +40,36 @@ type SubmitProofApiResponse = {
   error?: string;
 };
 
-const privateCheckError = (message: string) => {
+const confirmationErrorMessage = (message: string) => {
   if (
     message.includes("YENSHIA_") ||
     message.includes("publicInputsBase64") ||
     message.includes("proofBytesBase64") ||
     message.includes("real Noir proof")
   ) {
-    return "Private check is not ready yet because real proof data is missing.";
+    return "Confirmation is not ready yet.";
   }
 
   if (message.includes("STELLAR_") || message.includes("verifier contract")) {
-    return "Private check is not configured yet.";
+    return "Confirmation is not ready yet.";
   }
 
   if (message.includes("transaction") || message.includes("XDR") || message.includes("Soroban")) {
-    return "Private check could not be finished.";
+    return "Confirmation could not be finished.";
   }
 
   return message;
 };
 
-const LocationSessionPage: NextPage = () => {
+const locationErrorMessage = (message: string) => {
+  if (message.toLowerCase().includes("relay")) {
+    return "Still connecting. Keep this page open.";
+  }
+
+  return message;
+};
+
+const ShareLocationPage: NextPage = () => {
   const router = useRouter();
   const routePublicKey = router.query.publicKey?.toString();
   const publicKey =
@@ -71,8 +79,8 @@ const LocationSessionPage: NextPage = () => {
   const { address, signTransaction } = useStellarWallet();
   const { derivationError, derivedAccount, derivedAccountReady, deriveAccount, derivingAccount } = useDerivedAccount();
   const [proofResult, setProofResult] = useState<SubmitProofApiResponse | null>(null);
-  const sessionReady = !!address && !!publicKey && derivedAccountReady;
-  const isSessionOwner =
+  const sharingReady = !!address && !!publicKey && derivedAccountReady;
+  const isLinkOwner =
     !!publicKey && !!derivedAccount && publicKey.toLowerCase() === derivedAccount.publicKey.toLowerCase();
 
   const {
@@ -80,14 +88,12 @@ const LocationSessionPage: NextPage = () => {
     location: peerLocation,
     receiveError,
     relayError: receiveRelayError,
-    relayReady: receiveRelayReady,
-    relayStatus: receiveRelayStatus,
   } = useReceiveLocation({
-    enabled: sessionReady,
-    expectedSenderPublicKey: isSessionOwner ? undefined : publicKey,
-    sessionPublicKey: sessionReady ? publicKey : undefined,
+    enabled: sharingReady,
+    expectedSenderPublicKey: isLinkOwner ? undefined : publicKey,
+    linkPublicKey: sharingReady ? publicKey : undefined,
   });
-  const recipientPublicKey = sessionReady ? (isSessionOwner ? peerLocation?.senderPublicKey : publicKey) : undefined;
+  const recipientPublicKey = sharingReady ? (isLinkOwner ? peerLocation?.senderPublicKey : publicKey) : undefined;
   const canSendToPeer =
     !!recipientPublicKey &&
     !!derivedAccount &&
@@ -97,12 +103,10 @@ const LocationSessionPage: NextPage = () => {
     isGeolocationAvailable,
     isGeolocationEnabled,
     relayError: sendRelayError,
-    relayReady: sendRelayReady,
-    relayStatus: sendRelayStatus,
     sendError,
   } = useSendLocation({
+    linkPublicKey: sharingReady ? publicKey : undefined,
     recipientPublicKey: canSendToPeer ? recipientPublicKey : undefined,
-    sessionPublicKey: sessionReady ? publicKey : undefined,
   });
 
   const {
@@ -123,11 +127,11 @@ const LocationSessionPage: NextPage = () => {
 
       const prepared = (await prepareResponse.json()) as PrepareProofApiResponse;
       if (!prepareResponse.ok) {
-        throw new Error(prepared.success ? "Private check could not be prepared." : prepared.error);
+        throw new Error(prepared.success ? "Confirmation could not be prepared." : prepared.error);
       }
 
       if (!prepared.success) {
-        throw new Error(prepared.error || "Private check could not be prepared.");
+        throw new Error(prepared.error || "Confirmation could not be prepared.");
       }
 
       const signedTransactionXdr = await signTransaction(prepared.unsignedTransactionXdr, prepared.networkPassphrase);
@@ -143,7 +147,7 @@ const LocationSessionPage: NextPage = () => {
 
       const payload = (await response.json()) as SubmitProofApiResponse;
       if (!response.ok) {
-        throw new Error(payload.error || "Private check could not be finished.");
+        throw new Error(payload.error || "Confirmation could not be finished.");
       }
 
       return payload;
@@ -165,7 +169,7 @@ const LocationSessionPage: NextPage = () => {
     }
   };
 
-  const onPrepareSessionKey = () => {
+  const onStartPrivateSharing = () => {
     void deriveAccount().catch(() => undefined);
   };
 
@@ -199,7 +203,7 @@ const LocationSessionPage: NextPage = () => {
         <section className="soft-panel mx-auto grid max-w-4xl gap-5 overflow-hidden p-5 sm:p-6 md:grid-cols-[0.9fr_1.1fr]">
           <Image
             src="/illustrations/yenshia-illustration-invite.png"
-            alt="People preparing a private location session"
+            alt="People preparing private location sharing"
             width={720}
             height={560}
             priority
@@ -217,17 +221,17 @@ const LocationSessionPage: NextPage = () => {
   if (!derivedAccountReady) {
     return (
       <>
-        <MetaHeader title="Yenshia | Private Session" />
+        <MetaHeader title="Yenshia | Share Location" />
         <section className="soft-panel mx-auto max-w-2xl space-y-4 p-5 text-center sm:p-6">
-          <p className="status-pill mx-auto">{derivingAccount ? "Waiting for wallet" : "Private session"}</p>
-          <h1 className="font-serif text-3xl text-[var(--navy)] sm:text-4xl">Start the private session.</h1>
-          <p className="muted-copy leading-7">Confirm once in your wallet so this location session can stay private.</p>
+          <p className="status-pill mx-auto">{derivingAccount ? "Waiting for wallet" : "Private"}</p>
+          <h1 className="font-serif text-3xl text-[var(--navy)] sm:text-4xl">Start sharing location.</h1>
+          <p className="muted-copy leading-7">Confirm once in your wallet so sharing stays private.</p>
           {derivationError && <p className="text-sm text-[var(--error-red)]">{derivationError.message}</p>}
           <Button
             className="mx-auto whitespace-nowrap"
             disabled={derivingAccount}
             loading={derivingAccount}
-            onClick={onPrepareSessionKey}
+            onClick={onStartPrivateSharing}
           >
             Confirm in wallet
           </Button>
@@ -237,48 +241,32 @@ const LocationSessionPage: NextPage = () => {
   }
 
   const relayError = sendRelayError || receiveRelayError;
-  const relayStatus =
-    receiveRelayStatus === "loading" || sendRelayStatus === "loading" ? "loading" : receiveRelayStatus;
-  const sessionError = sendError || receiveError || relayError;
-  const waitingForPeer = sessionReady && isSessionOwner && !peerLocation;
+  const locationError = sendError || receiveError || relayError;
+  const waitingForPeer = sharingReady && isLinkOwner && !peerLocation;
   const hasLocationPair = !!coords && !!otherCoords && canSendToPeer;
-  const locationStatus = sessionError
-    ? sessionError.message
-    : relayStatus === "loading" || !receiveRelayReady || (canSendToPeer && !sendRelayReady)
-    ? "Connecting to the real location relay."
+  const locationStatus = locationError
+    ? locationErrorMessage(locationError.message)
     : waitingForPeer
     ? "Waiting for the other phone to open your link."
     : !canSendToPeer
     ? "Waiting for the other phone."
     : !isGeolocationAvailable
-    ? "Geolocation is not available in this browser."
+    ? "Location is not available in this browser."
     : !isGeolocationEnabled
-    ? "Enable geolocation to share a real location."
+    ? "Allow location to continue."
     : hasLocationPair
-    ? "Both locations are ready."
+    ? "Both phones are sharing location."
     : "Waiting for both phones.";
-  const locationPanelTitle = sessionError
-    ? "Location sharing is blocked"
-    : waitingForPeer
-    ? "Waiting for the other phone"
-    : !canSendToPeer
-    ? "Waiting for a real peer"
-    : "Location access needed";
+  const locationPanelTitle = locationError ? "Location paused" : hasLocationPair ? "Ready" : "Waiting for location";
 
   return (
     <>
-      <MetaHeader title="Yenshia | Location Session" />
+      <MetaHeader title="Yenshia | Share Location" />
 
       <div className="space-y-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div className="space-y-2">
-            <p className="status-pill w-fit">
-              <span className={hasLocationPair ? "status-dot" : "h-2 w-2 rounded-full bg-[var(--blue-sky)]"} />
-              {hasLocationPair ? "Location ready" : "Location session"}
-            </p>
-            <h1 className="font-serif text-3xl text-[var(--navy)] sm:text-4xl md:text-5xl">Private location session</h1>
-          </div>
-          {proofResult?.finalStatus && <span className="status-pill">{proofResult.finalStatus}</span>}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <h1 className="font-serif text-3xl text-[var(--navy)] sm:text-4xl md:text-5xl">Share location</h1>
+          {proofResult?.success && <span className="status-pill">Complete</span>}
         </div>
 
         <section className="soft-panel overflow-hidden p-4 md:p-6">
@@ -288,104 +276,71 @@ const LocationSessionPage: NextPage = () => {
               position2={[otherCoords.latitude, otherCoords.longitude]}
             />
           ) : (
-            <div className="grid min-h-[18rem] items-center gap-5 md:grid-cols-[1fr_0.9fr]">
-              <div className="space-y-4 text-center md:text-left">
+            <div className="grid min-h-[18rem] place-items-center text-center">
+              <div className="max-w-md space-y-3">
                 <h2 className="font-serif text-2xl text-[var(--navy)] sm:text-3xl">{locationPanelTitle}</h2>
-                <p className={sessionError ? "leading-7 text-[var(--error-red)]" : "muted-copy leading-7"}>
+                <p className={locationError ? "leading-7 text-[var(--error-red)]" : "muted-copy leading-7"}>
                   {locationStatus}
                 </p>
               </div>
-              <Image
-                src="/illustrations/yenshia-human-location-strip-transparent.png"
-                alt="People sharing a private location session"
-                width={1945}
-                height={808}
-                className="proof-illustration mx-auto w-full max-w-[22rem] md:max-w-[28rem]"
-              />
             </div>
           )}
         </section>
 
-        <section className="soft-panel flex w-full flex-col gap-5 p-5 md:p-6" aria-busy={isVerifying}>
-          <div className="space-y-2">
-            <h2 className="font-serif text-2xl text-[var(--navy)] sm:text-3xl">Private check</h2>
-            <p className="muted-copy max-w-3xl leading-7">
-              When both phones are sharing location, Yenshia asks your wallet for one confirmation and finishes the
-              private session check.
-            </p>
-          </div>
-
-          <div className="grid gap-3 md:grid-cols-3">
-            <div className="soft-card space-y-1 p-4">
-              <p className="text-sm font-semibold text-[var(--navy)]">Both phones</p>
-              <p className="text-sm text-[var(--neutral-muted)]">{hasLocationPair ? "Ready" : locationStatus}</p>
-            </div>
-            <div className="soft-card space-y-1 p-4">
-              <p className="text-sm font-semibold text-[var(--navy)]">Wallet</p>
-              <p className="text-sm text-[var(--neutral-muted)]">
-                {isVerifying ? "Confirm in wallet" : proofResult?.hash ? "Confirmed" : "Needed"}
+        {hasLocationPair && (
+          <section className="soft-panel flex w-full flex-col gap-4 p-5 md:p-6" aria-busy={isVerifying}>
+            <div className="space-y-2">
+              <h2 className="font-serif text-2xl text-[var(--navy)] sm:text-3xl">Ready to confirm</h2>
+              <p className="muted-copy max-w-3xl leading-7">
+                Both phones are sharing location. Confirm once in your wallet to finish.
               </p>
             </div>
-            <div className="soft-card space-y-1 p-4">
-              <p className="text-sm font-semibold text-[var(--navy)]">Session check</p>
+
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm text-[var(--neutral-muted)]">
-                {proofResult?.success ? "Complete" : proofResult ? "Needs attention" : "Not started"}
+                {proofResult?.success ? "Confirmed." : "Your wallet will ask for one confirmation."}
               </p>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm text-[var(--neutral-muted)]">
-              {hasLocationPair ? "Your wallet will ask for one confirmation." : locationStatus}
-            </p>
-            <Button
-              className="self-start whitespace-nowrap sm:self-auto"
-              type="button"
-              disabled={!hasLocationPair || isVerifying}
-              loading={isVerifying}
-              onClick={onVerifyProof}
-            >
-              Confirm private session
-            </Button>
-          </div>
-
-          {verificationError && (
-            <p className="break-words text-sm text-[var(--error-red)]">
-              {privateCheckError(verificationError.message)}
-            </p>
-          )}
-
-          {proofResult && (
-            <div className="soft-card space-y-2 break-words p-4 text-sm">
-              <p
-                className={
-                  proofResult.success ? "font-semibold text-[var(--navy)]" : "font-semibold text-[var(--error-red)]"
-                }
+              <Button
+                className="self-start whitespace-nowrap sm:self-auto"
+                type="button"
+                disabled={isVerifying || proofResult?.success}
+                loading={isVerifying}
+                onClick={onVerifyProof}
               >
-                {proofResult.success ? "Private check complete" : "Private check needs attention"}
-              </p>
-              {proofResult.hash && (
-                <p>
-                  <span className="font-semibold">Reference:</span> {proofResult.hash}
-                </p>
-              )}
-              {proofResult.submitStatus && (
-                <p>
-                  <span className="font-semibold">Status:</span> {proofResult.submitStatus}
-                </p>
-              )}
-              {proofResult.ledger && (
-                <p>
-                  <span className="font-semibold">Network record:</span> {proofResult.ledger}
-                </p>
-              )}
-              {proofResult.error && <p className="text-[var(--error-red)]">{privateCheckError(proofResult.error)}</p>}
+                Confirm
+              </Button>
             </div>
-          )}
-        </section>
+
+            {verificationError && (
+              <p className="break-words text-sm text-[var(--error-red)]">
+                {confirmationErrorMessage(verificationError.message)}
+              </p>
+            )}
+
+            {proofResult && (
+              <div className="soft-card space-y-2 break-words p-4 text-sm">
+                <p
+                  className={
+                    proofResult.success ? "font-semibold text-[var(--navy)]" : "font-semibold text-[var(--error-red)]"
+                  }
+                >
+                  {proofResult.success ? "Confirmed" : "Needs attention"}
+                </p>
+                {proofResult.hash && (
+                  <p>
+                    <span className="font-semibold">Reference:</span> {proofResult.hash}
+                  </p>
+                )}
+                {proofResult.error && (
+                  <p className="text-[var(--error-red)]">{confirmationErrorMessage(proofResult.error)}</p>
+                )}
+              </div>
+            )}
+          </section>
+        )}
       </div>
     </>
   );
 };
 
-export default LocationSessionPage;
+export default ShareLocationPage;

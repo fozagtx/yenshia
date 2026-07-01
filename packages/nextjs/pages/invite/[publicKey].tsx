@@ -60,7 +60,7 @@ const InvitePage: NextPage = () => {
           Start to share your location
         </h1>
         <p className="muted-copy text-center max-w-md leading-7">
-          You have been invited to a private location session. Share your live location or decline.
+          You have been invited to share location. Start sharing or decline.
         </p>
         <div className="flex flex-col gap-y-4 items-center justify-center w-full mt-4">
           <Link href={`/chat/${inviterPublicKey}`}>
