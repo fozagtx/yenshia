@@ -21,26 +21,41 @@
   --neutral-muted: #5f6b7c;
   --success-green: #0dde53;
   --error-red: #ef4444;
-  --bg-gradient: linear-gradient(#bdd7ff 0%, #ffffff 39.45%);
+  --bg-gradient: linear-gradient(180deg, #bdd7ff 0%, #e9f3ff 45%, #eff4f9 100%);
   --cta-gradient: linear-gradient(#0044b9 5.5%, #0074ec 35%, #4eb1ff 65%, #add9ff 95%);
   --shadow-card: rgba(255, 255, 255, 0.75) -4px -4px 6px inset, rgba(255, 255, 255, 0.75) 4px 4px 6px inset;
   --shadow-search: rgba(235, 243, 255, 0.75) -2px -2px 4px inset, rgba(235, 243, 255, 0.75) 2px 2px 4px inset;
   background: var(--bg-gradient);
+  background-color: var(--blue-frost);
 }
 
 html {
   min-height: 100%;
   background: var(--bg-gradient);
+  background-color: var(--blue-frost);
   overflow-x: hidden;
+  overscroll-behavior: none;
 }
 
 body {
-  min-height: 100vh;
+  min-height: 100dvh;
   background: var(--bg-gradient);
+  background-attachment: fixed;
+  background-color: var(--blue-frost);
   color: var(--navy);
   font-family: var(--font-sans);
   letter-spacing: 0;
   overflow-x: hidden;
+  overscroll-behavior: none;
+  overscroll-behavior-y: none;
+}
+
+#__next {
+  min-height: 100dvh;
+  background: var(--bg-gradient);
+  background-attachment: fixed;
+  background-color: var(--blue-frost);
+  overscroll-behavior: none;
 }
 
 *,
@@ -155,7 +170,11 @@ p {
 
   .yenshia-app-bg {
     background: var(--bg-gradient);
+    background-attachment: fixed;
+    background-color: var(--blue-frost);
+    min-height: 100dvh;
     overflow-x: clip;
+    overscroll-behavior: none;
   }
 
   .font-serif {

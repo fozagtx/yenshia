@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { StellarWalletButton } from "~~/components/StellarWalletButton";
 import { YenshiaLogo } from "~~/components/YenshiaLogo";
 import { useStellarWallet } from "~~/sdk/stellar-wallet";
 
@@ -8,10 +7,10 @@ export const Header = () => {
 
   return (
     <header className="sticky left-0 top-0 z-20 px-2 py-2 sm:px-3 sm:py-3">
-      <div className="layout-container">
-        <div className="header-base flex w-full items-center justify-between gap-2 px-2 py-2 sm:gap-3 sm:px-4">
+      <div className="layout-container flex justify-center sm:justify-start">
+        <div className="header-base inline-flex w-auto items-center gap-3 px-2 py-2 sm:px-4">
           <Link href="/" className="flex min-w-0 items-center" aria-label="Yenshia home">
-            <YenshiaLogo className="h-10 w-[7.1rem] sm:h-11 sm:w-[7.8rem]" />
+            <YenshiaLogo className="h-10 w-[9rem] sm:h-11 sm:w-[10rem]" />
           </Link>
 
           {address ? (
@@ -21,9 +20,7 @@ export const Header = () => {
             >
               App
             </Link>
-          ) : (
-            <StellarWalletButton className="connect-shell header-connect shrink-0" label="Connect" showError={false} />
-          )}
+          ) : null}
         </div>
       </div>
     </header>

@@ -1,8 +1,8 @@
+import { useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import type { NextPage } from "next";
 import { MetaHeader } from "~~/components/MetaHeader";
-import { StellarWalletButton } from "~~/components/StellarWalletButton";
 import { Button } from "~~/components/ui/Button";
 import { CopyButton } from "~~/components/ui/CopyButton";
 import { useHasMounted } from "~~/hooks/useHasMounted";
@@ -15,27 +15,17 @@ const InvitePage: NextPage = () => {
   const isValidInviteKey = !!inviterPublicKey && /^0x04[0-9a-fA-F]{128}$/.test(inviterPublicKey);
   const { address, isConnecting, isConnected } = useStellarWallet();
 
-  if (!hasMounted || isConnecting) {
+  useEffect(() => {
+    if (hasMounted && router.isReady && isValidInviteKey && (!address || !isConnected)) {
+      void router.replace(`/?next=${encodeURIComponent(router.asPath)}`);
+    }
+  }, [address, hasMounted, isConnected, isValidInviteKey, router]);
+
+  if (!hasMounted || !router.isReady || isConnecting) {
     return (
       <div className="my-14 flex justify-center text-sm font-semibold text-[var(--neutral-muted)]">
         Preparing wallet state
       </div>
-    );
-  }
-
-  if (!address || !isConnected) {
-    return (
-      <>
-        <MetaHeader title="Yenshia | Join Location Session" />
-        <section className="soft-panel mx-auto max-w-xl space-y-4 p-6 text-center">
-          <p className="status-pill mx-auto">Wallet required</p>
-          <h1 className="font-serif text-4xl text-[var(--navy)]">Connect to join</h1>
-          <p className="muted-copy leading-7">
-            Yenshia needs a connected Stellar wallet before it can start encrypted location sharing.
-          </p>
-          <StellarWalletButton className="justify-center" />
-        </section>
-      </>
     );
   }
 
@@ -50,6 +40,18 @@ const InvitePage: NextPage = () => {
           <Link href="/" className="inline-flex">
             <Button color="secondary">Back</Button>
           </Link>
+        </section>
+      </>
+    );
+  }
+
+  if (!address || !isConnected) {
+    return (
+      <>
+        <MetaHeader title="Yenshia | Connect Wallet" />
+        <section className="soft-panel mx-auto max-w-xl space-y-4 p-6 text-center">
+          <p className="status-pill mx-auto">Landing page required</p>
+          <h1 className="font-serif text-4xl text-[var(--navy)]">Connect from the landing page.</h1>
         </section>
       </>
     );

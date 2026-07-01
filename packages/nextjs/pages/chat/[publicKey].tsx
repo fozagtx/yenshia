@@ -1,11 +1,10 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import { useMutation } from "@tanstack/react-query";
 import type { NextPage } from "next";
 import { MetaHeader } from "~~/components/MetaHeader";
-import { StellarWalletButton } from "~~/components/StellarWalletButton";
 import { Button } from "~~/components/ui/Button";
 import { useHasMounted } from "~~/hooks/useHasMounted";
 import { useDerivedAccount } from "~~/sdk/crypto";
@@ -107,6 +106,12 @@ const LocationSessionPage: NextPage = () => {
     void deriveAccount().catch(() => undefined);
   };
 
+  useEffect(() => {
+    if (hasMounted && router.isReady && publicKey && !address) {
+      void router.replace(`/?next=${encodeURIComponent(router.asPath)}`);
+    }
+  }, [address, hasMounted, publicKey, router]);
+
   if (!hasMounted) {
     return null;
   }
@@ -129,7 +134,7 @@ const LocationSessionPage: NextPage = () => {
   if (!address) {
     return (
       <>
-        <MetaHeader title="Yenshia | Stellar Wallet Required" />
+        <MetaHeader title="Yenshia | Connect Wallet" />
         <section className="soft-panel mx-auto grid max-w-5xl gap-8 overflow-hidden p-6 md:grid-cols-[0.9fr_1.1fr] md:p-8">
           <Image
             src="/illustrations/yenshia-illustration-invite.png"
@@ -140,12 +145,8 @@ const LocationSessionPage: NextPage = () => {
             className="proof-illustration mx-auto w-full max-w-[24rem]"
           />
           <div className="flex flex-col justify-center gap-4 text-center md:text-left">
-            <p className="status-pill mx-auto md:mx-0">Stellar wallet required</p>
-            <h1 className="font-serif text-4xl text-[var(--navy)]">Connect to share location.</h1>
-            <p className="muted-copy leading-7">
-              Yenshia starts encrypted location sharing only after a real Stellar wallet is connected.
-            </p>
-            <StellarWalletButton className="justify-center md:justify-start" />
+            <p className="status-pill mx-auto md:mx-0">Landing page required</p>
+            <h1 className="font-serif text-4xl text-[var(--navy)]">Connect from the landing page.</h1>
           </div>
         </section>
       </>
@@ -168,7 +169,6 @@ const LocationSessionPage: NextPage = () => {
           <Button disabled={derivingAccount} loading={derivingAccount} onClick={onPrepareSessionKey}>
             Prepare session key
           </Button>
-          <StellarWalletButton className="justify-center" />
         </section>
       </>
     );

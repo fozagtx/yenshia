@@ -47,8 +47,12 @@ const faqs = [
 const HomePage: NextPage = () => {
   const router = useRouter();
   const { address } = useStellarWallet();
+  const requestedNextPath =
+    typeof router.query.next === "string" && router.query.next.startsWith("/") && !router.query.next.startsWith("//")
+      ? router.query.next
+      : "/invite";
   const goToInvite = () => {
-    void router.push("/invite");
+    void router.push(requestedNextPath);
   };
 
   return (
@@ -154,18 +158,6 @@ const HomePage: NextPage = () => {
       <footer className="flex flex-col items-start gap-3 border-t border-[rgba(189,215,255,0.3)] py-7 text-sm text-[var(--neutral-muted)] md:flex-row md:items-center md:justify-between">
         <p className="font-serif text-2xl text-[var(--navy)]">Yenshia</p>
         <p>Private location sharing on Stellar.</p>
-        {address ? (
-          <Link href="/invite" className="font-semibold text-[var(--blue-primary)]">
-            App
-          </Link>
-        ) : (
-          <StellarWalletButton
-            className="connect-shell"
-            label="Connect wallet"
-            onConnected={goToInvite}
-            showError={false}
-          />
-        )}
       </footer>
     </>
   );

@@ -1,10 +1,11 @@
+import { useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import type { NextPage } from "next";
 import { ArrowLeftIcon, ClipboardDocumentIcon } from "@heroicons/react/24/solid";
 import { MetaHeader } from "~~/components/MetaHeader";
 import { QrCode } from "~~/components/QrCode";
-import { StellarWalletButton } from "~~/components/StellarWalletButton";
 import { Button } from "~~/components/ui/Button";
 import { CopyButton } from "~~/components/ui/CopyButton";
 import { useHasMounted } from "~~/hooks/useHasMounted";
@@ -12,13 +13,32 @@ import { useDerivedAccount } from "~~/sdk/crypto";
 import { useStellarWallet } from "~~/sdk/stellar-wallet";
 
 const InvitePage: NextPage = () => {
+  const router = useRouter();
   const { address } = useStellarWallet();
   const { derivationError, derivedAccount, deriveAccount, derivingAccount } = useDerivedAccount();
 
   const hasMounted = useHasMounted();
 
+  useEffect(() => {
+    if (hasMounted && !address) {
+      void router.replace("/");
+    }
+  }, [address, hasMounted, router]);
+
   if (!hasMounted) {
     return null;
+  }
+
+  if (!address) {
+    return (
+      <>
+        <MetaHeader title="Yenshia | Connect Wallet" />
+        <section className="soft-panel mx-auto max-w-xl space-y-4 p-6 text-center">
+          <p className="status-pill mx-auto">Landing page required</p>
+          <h1 className="font-serif text-4xl text-[var(--navy)]">Connect from the landing page.</h1>
+        </section>
+      </>
+    );
   }
 
   const inviteLink = derivedAccount ? `${window.location.origin}/invite/${derivedAccount.publicKey}` : "";
@@ -75,23 +95,17 @@ const InvitePage: NextPage = () => {
           <div className="flex flex-col justify-center gap-4 text-center md:text-left">
             <p className="status-pill mx-auto md:mx-0">Wallet-derived key required</p>
             <h1 className="font-serif text-4xl text-[var(--navy)]">No invite key yet</h1>
-            <p className="muted-copy leading-7">
-              Connect a Stellar wallet, then create the private link when you are ready.
-            </p>
+            <p className="muted-copy leading-7">Create the private link when you are ready.</p>
             {derivingAccount && <p className="muted-copy leading-7">Waiting for your wallet signature.</p>}
             {derivationError && <p className="text-sm text-[var(--error-red)]">{derivationError.message}</p>}
-            {address ? (
-              <Button
-                className="justify-center md:justify-start"
-                disabled={derivingAccount}
-                loading={derivingAccount}
-                onClick={onCreateInvite}
-              >
-                Create private link
-              </Button>
-            ) : (
-              <StellarWalletButton className="justify-center md:justify-start" />
-            )}
+            <Button
+              className="justify-center md:justify-start"
+              disabled={derivingAccount}
+              loading={derivingAccount}
+              onClick={onCreateInvite}
+            >
+              Create private link
+            </Button>
           </div>
         )}
       </section>

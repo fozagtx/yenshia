@@ -2,9 +2,9 @@ export const YenshiaLogo = ({ className = "" }: { className?: string }) => {
   return (
     <svg
       className={className}
-      width="136"
+      width="174"
       height="48"
-      viewBox="0 0 136 48"
+      viewBox="0 0 174 48"
       fill="none"
       role="img"
       aria-labelledby="yenshia-logo-title"
