@@ -4,6 +4,8 @@ import { generateEncryptionClient, useDerivedAccount } from "~~/sdk/crypto";
 import { cleanDisplayName } from "~~/sdk/display-name";
 import { useStellarWallet } from "~~/sdk/stellar-wallet";
 
+const RELAY_FINDING_PEERS_MESSAGE = "Private relay is finding peers.";
+
 interface UseSendLocationParams {
   displayName?: string;
   enabled?: boolean;
@@ -116,6 +118,11 @@ export const useSendLocation = ({
 
     const publishLocation = () => {
       void callback().catch(error => {
+        if (error instanceof Error && error.message === RELAY_FINDING_PEERS_MESSAGE) {
+          setSendError(null);
+          return;
+        }
+
         setSendError(error instanceof Error ? error : new Error("Location could not be sent."));
       });
     };

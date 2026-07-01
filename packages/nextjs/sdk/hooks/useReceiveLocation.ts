@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { CONTENT_TOPIC, locationMessage } from "../constants";
 import { useNode } from "./useNode";
-import { DecodedMessage, PageDirection, createDecoder } from "@waku/sdk";
+import type { IDecodedMessage } from "@waku/sdk";
 import { useDerivedAccount, useDerivedAccountEncryption } from "~~/sdk/crypto";
 import { cleanDisplayName } from "~~/sdk/display-name";
 
@@ -78,9 +78,9 @@ export const useReceiveLocation = ({
   useEffect(() => {
     if (!enabled || !node || !derivedAccountReady || !derivedAccount || !linkPublicKey || !ownParticipantId) return;
 
-    const decoder = createDecoder(CONTENT_TOPIC);
+    const decoder = node.createDecoder({ contentTopic: CONTENT_TOPIC });
 
-    const handleMessage = async (wakuMessage: DecodedMessage) => {
+    const handleMessage = async (wakuMessage: IDecodedMessage) => {
       if (!wakuMessage.payload) return;
 
       try {
@@ -113,27 +113,18 @@ export const useReceiveLocation = ({
       }
     };
 
-    let unsubscribe: (() => void | Promise<void>) | undefined;
     let cancelled = false;
 
     const subscribe = async () => {
-      const nextUnsubscribe = await node.filter.subscribe([decoder], handleMessage);
-      if (cancelled && typeof nextUnsubscribe === "function") {
-        void nextUnsubscribe();
-        return;
-      }
-      if (typeof nextUnsubscribe === "function") {
-        unsubscribe = nextUnsubscribe;
-      }
+      await node.filter.subscribe([decoder], handleMessage);
+      if (cancelled) return;
 
       void node.store
         .queryWithOrderedCallback([decoder], handleMessage, {
-          pageDirection: PageDirection.BACKWARD,
-          pageSize: 25,
-          timeFilter: {
-            startTime: new Date(Date.now() - 10 * 60 * 1000),
-            endTime: new Date(),
-          },
+          paginationForward: false,
+          paginationLimit: 25,
+          timeStart: new Date(Date.now() - 10 * 60 * 1000),
+          timeEnd: new Date(),
         })
         .catch(() => undefined);
     };
@@ -144,7 +135,7 @@ export const useReceiveLocation = ({
 
     return () => {
       cancelled = true;
-      void unsubscribe?.();
+      void node.filter.unsubscribe([decoder]);
     };
   }, [
     enabled,

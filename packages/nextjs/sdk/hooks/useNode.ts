@@ -1,29 +1,20 @@
 import { useQuery } from "@tanstack/react-query";
-import { Protocols, createLightNode, waitForRemotePeer } from "@waku/sdk";
-
-const RELAY_CONNECT_TIMEOUT_MS = 45000;
-const RELAY_RETRY_DELAY_MS = 5000;
+import { createLightNode } from "@waku/sdk";
 
 export const useNode = () => {
   return useQuery({
     queryKey: ["waku-node"],
     queryFn: async () => {
-      const node = await createLightNode({
+      return createLightNode({
         defaultBootstrap: true,
+        networkConfig: {
+          clusterId: 1,
+          numShardsInCluster: 8,
+        },
       });
-      await node.start();
-
-      try {
-        await waitForRemotePeer(node, [Protocols.Filter, Protocols.LightPush], RELAY_CONNECT_TIMEOUT_MS);
-      } catch (error) {
-        await node.stop().catch(() => undefined);
-        throw error instanceof Error ? error : new Error("Private location relay did not connect.");
-      }
-
-      return node;
     },
-    retry: true,
-    retryDelay: RELAY_RETRY_DELAY_MS,
+    retry: 3,
+    retryDelay: 3000,
     refetchOnWindowFocus: false,
     staleTime: Infinity,
   });
