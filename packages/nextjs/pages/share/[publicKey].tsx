@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
-import { useMutation } from "@tanstack/react-query";
 import type { NextPage } from "next";
 import { MetaHeader } from "~~/components/MetaHeader";
 import { Button } from "~~/components/ui/Button";
@@ -15,51 +14,6 @@ import { useStellarWallet } from "~~/sdk/stellar-wallet";
 const Map = dynamic(() => import("../../components/my-map/my-map"), {
   ssr: false,
 });
-
-type PrepareProofApiResponse =
-  | {
-      success: true;
-      contractId: string;
-      networkPassphrase: string;
-      unsignedTransactionXdr: string;
-    }
-  | {
-      success: false;
-      error: string;
-    };
-
-type SubmitProofApiResponse = {
-  success: boolean;
-  hash?: string;
-  submitStatus?: string;
-  finalStatus?: string;
-  latestLedger?: number;
-  ledger?: number;
-  resultXdr?: string;
-  returnValueXdr?: string;
-  error?: string;
-};
-
-const finishErrorMessage = (message: string) => {
-  if (
-    message.includes("YENSHIA_") ||
-    message.includes("publicInputsBase64") ||
-    message.includes("proofBytesBase64") ||
-    message.includes("real Noir proof")
-  ) {
-    return "Finish is not ready yet.";
-  }
-
-  if (message.includes("STELLAR_") || message.includes("verifier contract")) {
-    return "Finish is not ready yet.";
-  }
-
-  if (message.includes("transaction") || message.includes("XDR") || message.includes("Soroban")) {
-    return "Could not finish.";
-  }
-
-  return message;
-};
 
 const locationErrorMessage = (message: string) => message;
 
@@ -83,7 +37,7 @@ const ShareLocationPage: NextPage = () => {
     routePublicKey && /^0x04[0-9a-fA-F]{128}$/.test(routePublicKey) ? (routePublicKey as `0x${string}`) : undefined;
 
   const hasMounted = useHasMounted();
-  const { address, signTransaction } = useStellarWallet();
+  const { address } = useStellarWallet();
   const { derivationError, derivedAccount, derivedAccountReady, deriveAccount, derivingAccount } = useDerivedAccount();
   const [participantId, setParticipantId] = useState<string | null>(null);
   const [participantIdentityError, setParticipantIdentityError] = useState<Error | null>(null);
@@ -92,7 +46,6 @@ const ShareLocationPage: NextPage = () => {
   const startFromInvite = router.query.start === "1";
   const currentDisplayName = cleanDisplayName(router.query.name) || "You";
   const inviteDisplayName = cleanDisplayName(router.query.inviterName);
-  const [proofResult, setProofResult] = useState<SubmitProofApiResponse | null>(null);
   const sharePageReady = !!address && !!publicKey && !!participantId && !participantIdentityError;
   const privateSharingReady = sharePageReady && derivedAccountReady;
   const isInviteParticipant = joinFromInvite;
@@ -140,66 +93,6 @@ const ShareLocationPage: NextPage = () => {
     participantId: participantId ?? undefined,
     recipientPublicKey: canSendToPeer ? recipientPublicKey : undefined,
   });
-
-  const {
-    mutateAsync: finishSharing,
-    error: finishError,
-    isLoading: isFinishing,
-  } = useMutation<SubmitProofApiResponse, Error, string>({
-    mutationFn: async walletAddress => {
-      const prepareResponse = await fetch("/api/stellar/prepare-proof", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          sourceAddress: walletAddress,
-        }),
-      });
-
-      const prepared = (await prepareResponse.json()) as PrepareProofApiResponse;
-      if (!prepareResponse.ok) {
-        throw new Error(prepared.success ? "Could not finish." : prepared.error);
-      }
-
-      if (!prepared.success) {
-        throw new Error(prepared.error || "Could not finish.");
-      }
-
-      const signedTransactionXdr = await signTransaction(prepared.unsignedTransactionXdr, prepared.networkPassphrase);
-      const response = await fetch("/api/stellar/submit-proof", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          signedTransactionXdr,
-        }),
-      });
-
-      const payload = (await response.json()) as SubmitProofApiResponse;
-      if (!response.ok) {
-        throw new Error(payload.error || "Could not finish.");
-      }
-
-      return payload;
-    },
-  });
-
-  const onFinishSharing = async () => {
-    setProofResult(null);
-
-    try {
-      if (!address) {
-        throw new Error("Connect your wallet before continuing.");
-      }
-
-      const result = await finishSharing(address);
-      setProofResult(result);
-    } catch {
-      setProofResult(null);
-    }
-  };
 
   const onStartPrivateSharing = () => {
     void deriveAccount().catch(() => undefined);
@@ -317,7 +210,7 @@ const ShareLocationPage: NextPage = () => {
     : hasOwnLocation
     ? "Sending your location privately."
     : "Waiting for your location.";
-  const bottomMessage = proofResult?.success ? "Done." : shareMessage;
+  const bottomMessage = shareMessage;
   const privateStatusText = locationError
     ? "Needs attention"
     : hasPublishedLocation
@@ -335,7 +228,7 @@ const ShareLocationPage: NextPage = () => {
     : hasOwnLocation
     ? "Sending"
     : "Waiting";
-  const peerStatusText = hasPeerLocation ? "Visible on map" : "Waiting for other person";
+  const peerStatusText = hasPeerLocation ? "Pinned on map" : "Waiting for other person";
 
   return (
     <>
@@ -403,7 +296,7 @@ const ShareLocationPage: NextPage = () => {
               >
                 {bottomMessage}
               </p>
-              {!derivedAccountReady && derivationError ? (
+              {!derivedAccountReady && derivationError && (
                 <Button
                   className="self-start whitespace-nowrap sm:self-auto"
                   type="button"
@@ -413,30 +306,11 @@ const ShareLocationPage: NextPage = () => {
                 >
                   Try again
                 </Button>
-              ) : (
-                hasLocationPair &&
-                !proofResult?.success && (
-                  <Button
-                    className="self-start whitespace-nowrap sm:self-auto"
-                    type="button"
-                    disabled={isFinishing}
-                    loading={isFinishing}
-                    onClick={onFinishSharing}
-                  >
-                    Done
-                  </Button>
-                )
               )}
             </div>
           </div>
         )}
       </section>
-
-      {(finishError || proofResult?.error) && (
-        <p className="mt-3 break-words text-sm text-[var(--error-red)]">
-          {finishErrorMessage((finishError || new Error(proofResult?.error)).message)}
-        </p>
-      )}
     </>
   );
 };

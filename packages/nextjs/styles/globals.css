@@ -263,46 +263,55 @@ p {
 .map-avatar-marker {
   position: relative;
   display: inline-flex;
-  max-width: 10rem;
+  min-width: 8.75rem;
+  max-width: 11rem;
   align-items: center;
-  gap: 0.4rem;
-  border: 1px solid rgba(0, 34, 89, 0.14);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 10px 24px rgba(0, 34, 89, 0.18);
+  gap: 0.5rem;
+  border: 2px solid var(--blue-deep);
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 12px 28px rgba(0, 34, 89, 0.28);
   color: var(--navy);
   font-family: var(--font-sans);
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   font-weight: 700;
   line-height: 1;
-  padding: 0.25rem 0.55rem 0.25rem 0.25rem;
+  padding: 0.38rem 0.65rem 0.38rem 0.38rem;
   white-space: nowrap;
+}
+
+.map-avatar-marker--peer {
+  border-color: #0a7f36;
 }
 
 .map-avatar-marker::after {
   position: absolute;
-  bottom: -0.4rem;
-  left: 1.15rem;
-  width: 0.75rem;
-  height: 0.75rem;
-  border-right: 1px solid rgba(0, 34, 89, 0.14);
-  border-bottom: 1px solid rgba(0, 34, 89, 0.14);
-  background: rgba(255, 255, 255, 0.96);
+  bottom: -0.46rem;
+  left: 1.35rem;
+  width: 0.85rem;
+  height: 0.85rem;
+  border-right: 2px solid var(--blue-deep);
+  border-bottom: 2px solid var(--blue-deep);
+  background: #ffffff;
   content: "";
   transform: rotate(45deg) !important;
+}
+
+.map-avatar-marker--peer::after {
+  border-color: #0a7f36;
 }
 
 .map-avatar-initials {
   position: relative;
   z-index: 1;
   display: grid;
-  width: 1.9rem;
-  height: 1.9rem;
+  width: 2.2rem;
+  height: 2.2rem;
   place-items: center;
   border-radius: 999px;
   background: var(--blue-primary);
   color: white;
-  font-size: 0.75rem;
+  font-size: 0.82rem;
 }
 
 .map-avatar-marker--peer .map-avatar-initials {
@@ -314,9 +323,34 @@ p {
   position: relative;
   z-index: 1;
   display: block;
-  max-width: 6.2rem;
+  max-width: 7rem;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.map-avatar-copy {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 0.18rem;
+  min-width: 0;
+}
+
+.map-avatar-role {
+  color: var(--neutral-muted);
+  font-size: 0.62rem;
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.leaflet-tooltip {
+  border: 1px solid rgba(0, 34, 89, 0.14);
+  border-radius: 999px;
+  box-shadow: 0 8px 20px rgba(0, 34, 89, 0.18);
+  color: var(--navy);
+  font-family: var(--font-sans);
+  font-weight: 800;
 }
 
 @media (min-width: 640px) {

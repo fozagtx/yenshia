@@ -2,6 +2,15 @@ import { CONTENT_TOPIC, locationMessage } from "../constants";
 import { useNode } from "./useNode";
 
 const RELAY_FINDING_PEERS_MESSAGE = "Private relay is finding peers.";
+const TRANSIENT_RELAY_ERRORS = new Set([
+  "No peer available",
+  "No relay peers available",
+  "No stream available",
+  "No response received",
+  "Stream aborted",
+  "Service temporarily unavailable",
+  "Remote peer rejected",
+]);
 
 export const useSendMessage = () => {
   const { data: node, error, status } = useNode();
@@ -25,10 +34,8 @@ export const useSendMessage = () => {
 
     if (result.successes.length === 0) {
       const errors = result.failures?.map(failure => failure.error).filter(Boolean) ?? [];
-      const isFindingPeers = errors.some(
-        error => error === "No peer available" || error === "No relay peers available",
-      );
-      if (isFindingPeers) {
+      const isTransientRelayIssue = errors.length === 0 || errors.some(error => TRANSIENT_RELAY_ERRORS.has(error));
+      if (isTransientRelayIssue) {
         throw new Error(RELAY_FINDING_PEERS_MESSAGE);
       }
 
