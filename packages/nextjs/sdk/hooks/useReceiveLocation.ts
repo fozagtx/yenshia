@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { CONTENT_TOPIC, locationMessage } from "../constants";
 import { useNode } from "./useNode";
-import { DecodedMessage, createDecoder } from "@waku/sdk";
+import { DecodedMessage, PageDirection, createDecoder } from "@waku/sdk";
 import { useDerivedAccount, useDerivedAccountEncryption } from "~~/sdk/crypto";
 
 type HexPublicKey = `0x${string}`;
@@ -66,7 +66,9 @@ export const useReceiveLocation = ({
   useEffect(() => {
     if (!enabled || !node || !derivedAccountReady || !derivedAccount || !linkPublicKey || !ownParticipantId) return;
 
-    const callback = async (wakuMessage: DecodedMessage) => {
+    const decoder = createDecoder(CONTENT_TOPIC);
+
+    const handleMessage = async (wakuMessage: DecodedMessage) => {
       if (!wakuMessage.payload) return;
 
       try {
@@ -90,25 +92,38 @@ export const useReceiveLocation = ({
         if (parsedPayload.participantId === ownParticipantId) return;
 
         setReceiveError(null);
-        setLocation(parsedPayload);
+        setLocation(currentLocation => {
+          if (currentLocation && currentLocation.sentAt > parsedPayload.sentAt) return currentLocation;
+          return parsedPayload;
+        });
       } catch {
         // Messages for other Yenshia links share the same public Waku topic and will not decrypt here.
       }
     };
 
-    let unsubscribe: (() => void) | undefined;
+    let unsubscribe: (() => void | Promise<void>) | undefined;
     let cancelled = false;
 
     const subscribe = async () => {
-      const decoder = createDecoder(CONTENT_TOPIC);
-      const nextUnsubscribe = await node.filter.subscribe([decoder], callback);
+      const nextUnsubscribe = await node.filter.subscribe([decoder], handleMessage);
       if (cancelled && typeof nextUnsubscribe === "function") {
-        nextUnsubscribe();
+        void nextUnsubscribe();
         return;
       }
       if (typeof nextUnsubscribe === "function") {
         unsubscribe = nextUnsubscribe;
       }
+
+      void node.store
+        .queryWithOrderedCallback([decoder], handleMessage, {
+          pageDirection: PageDirection.BACKWARD,
+          pageSize: 25,
+          timeFilter: {
+            startTime: new Date(Date.now() - 10 * 60 * 1000),
+            endTime: new Date(),
+          },
+        })
+        .catch(() => undefined);
     };
 
     void subscribe().catch(error => {
@@ -117,7 +132,7 @@ export const useReceiveLocation = ({
 
     return () => {
       cancelled = true;
-      unsubscribe?.();
+      void unsubscribe?.();
     };
   }, [
     enabled,

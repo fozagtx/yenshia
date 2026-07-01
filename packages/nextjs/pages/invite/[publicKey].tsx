@@ -84,15 +84,13 @@ const InvitePage: NextPage = () => {
   return (
     <>
       <MetaHeader title="Yenshia | Share Location" />
-      <section className="flex flex-col gap-y-4 items-center justify-center w-full py-10">
-        <h1 className="w-full text-center font-serif text-3xl text-[var(--navy)] sm:text-4xl mb-2">
-          Share your location
-        </h1>
-        <p className="muted-copy text-center max-w-md leading-7">
+      <section className="mx-auto flex w-full max-w-lg flex-col items-center justify-center gap-y-3 py-5 sm:py-6">
+        <h1 className="w-full text-center font-serif text-3xl text-[var(--navy)] sm:text-4xl">Share your location</h1>
+        <p className="muted-copy max-w-md text-center leading-7">
           Press once. Your browser will ask for location access.
         </p>
         {locationError && <p className="text-center text-sm text-[var(--error-red)]">{locationError}</p>}
-        <div className="flex flex-col gap-y-4 items-center justify-center w-full mt-4">
+        <div className="mt-2 flex w-full flex-col items-center justify-center gap-y-3">
           <Button
             className="min-w-[15rem]"
             loading={requestingLocation}

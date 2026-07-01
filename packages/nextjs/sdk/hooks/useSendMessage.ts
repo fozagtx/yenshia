@@ -10,22 +10,24 @@ export const useSendMessage = () => {
       throw new Error("Private sharing is still starting.");
     }
 
-    // Create a message encoder
     const encoder = createEncoder({ contentTopic: CONTENT_TOPIC });
-
-    // Create a new message object
     const protoMessage = locationMessage.create({
       timestamp: Date.now(),
       sender,
       message,
     });
-
-    // Serialise the message using Protobuf
     const serialisedMessage = locationMessage.encode(protoMessage).finish();
 
-    await node.lightPush.send(encoder, {
+    const result = await node.lightPush.send(encoder, {
       payload: serialisedMessage,
     });
+
+    if (result.recipients.length === 0) {
+      const errorReason = result.errors?.length ? ` ${result.errors.join(", ")}` : "";
+      throw new Error(`Private location was not accepted by the relay.${errorReason}`);
+    }
+
+    return result;
   };
 
   return {

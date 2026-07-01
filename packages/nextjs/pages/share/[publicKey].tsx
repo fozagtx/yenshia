@@ -325,12 +325,12 @@ const ShareLocationPage: NextPage = () => {
     <>
       <MetaHeader title="Yenshia | Share Location" />
 
-      <section className="relative min-h-[calc(100dvh-8.5rem)] overflow-hidden rounded-[1.75rem] bg-[var(--blue-pale)] shadow-[var(--shadow-card)]">
+      <section className="relative min-h-[21rem] overflow-hidden rounded-2xl bg-[var(--blue-pale)] shadow-[var(--shadow-card)]">
         {hasOwnLocation ? (
           <Map position1={[coords.latitude, coords.longitude]} position2={mapPosition2} />
         ) : (
-          <div className="grid min-h-[calc(100dvh-8.5rem)] place-items-center px-5 pb-28 pt-10 text-center sm:min-h-[34rem]">
-            <div className="max-w-sm space-y-4">
+          <div className="grid min-h-[21rem] place-items-center px-4 pb-24 pt-6 text-center sm:min-h-[24rem]">
+            <div className="max-w-sm space-y-3">
               <h1 className="font-serif text-3xl text-[var(--navy)] sm:text-4xl">
                 {locationRequested ? "Waiting for location" : "Share location"}
               </h1>
@@ -347,8 +347,8 @@ const ShareLocationPage: NextPage = () => {
         )}
 
         {hasOwnLocation && (
-          <div className="pointer-events-none absolute inset-x-3 bottom-3 sm:inset-x-4 sm:bottom-4">
-            <div className="pointer-events-auto flex flex-col gap-3 rounded-2xl bg-white/95 p-3 shadow-[var(--shadow-search)] backdrop-blur sm:flex-row sm:items-center sm:justify-between sm:p-4">
+          <div className="pointer-events-none absolute inset-x-2 bottom-2 sm:inset-x-3 sm:bottom-3">
+            <div className="pointer-events-auto flex flex-col gap-2 rounded-xl bg-white/95 p-2.5 shadow-[var(--shadow-search)] backdrop-blur sm:flex-row sm:items-center sm:justify-between sm:p-3">
               <p
                 className={
                   locationError

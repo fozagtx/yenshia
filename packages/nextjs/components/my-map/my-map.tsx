@@ -35,7 +35,7 @@ const MyMap = ({ position1, position2 }: MyMapProps) => {
       attributionControl={false}
       center={position1}
       zoom={17}
-      className="z-10 h-[calc(100dvh-8.5rem)] min-h-[24rem] w-full rounded-[1.75rem] sm:h-[min(68dvh,38rem)]"
+      className="z-10 h-[min(68dvh,34rem)] min-h-[21rem] w-full rounded-2xl"
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

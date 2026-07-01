@@ -77,7 +77,7 @@ const InvitePage: NextPage = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <MetaHeader title="Yenshia | Location Invite" />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -92,17 +92,17 @@ const InvitePage: NextPage = () => {
         </p>
       </div>
 
-      <section className="soft-panel grid gap-5 p-4 sm:p-5 md:grid-cols-[0.82fr_1.18fr] md:items-center md:gap-7 md:p-6">
+      <section className="soft-panel grid gap-4 p-4 md:grid-cols-[0.8fr_1.2fr] md:items-center md:gap-5 md:p-5">
         <Image
           src="/illustrations/yenshia-human-location-strip-transparent.png"
           alt="People sharing a private location link"
           width={1945}
           height={808}
-          className="proof-illustration mx-auto w-full max-w-[22rem] md:max-w-[28rem]"
+          className="proof-illustration mx-auto w-full max-w-[18rem] md:max-w-[23rem]"
         />
 
         {derivedAccount ? (
-          <div className="flex flex-col items-center gap-5 text-center">
+          <div className="flex flex-col items-center gap-4 text-center">
             <div className="space-y-2">
               <p className="status-pill mx-auto">
                 <span className="status-dot" />
@@ -111,11 +111,11 @@ const InvitePage: NextPage = () => {
               <h1 className="font-serif text-3xl text-[var(--navy)] sm:text-4xl">Share this link</h1>
             </div>
 
-            <div className="rounded-3xl bg-white p-3 shadow-[var(--shadow-search)]">
+            <div className="rounded-2xl bg-white p-2 shadow-[var(--shadow-search)]">
               <QrCode address={inviteLink} />
             </div>
 
-            <p className="w-full max-w-[32rem] break-words rounded-xl border border-[rgba(189,215,255,0.28)] bg-white/80 p-4 font-mono text-sm text-[var(--navy)]">
+            <p className="w-full max-w-[28rem] break-words rounded-xl border border-[rgba(189,215,255,0.28)] bg-white/80 p-3 font-mono text-sm text-[var(--navy)]">
               {inviteLink}
             </p>
 
@@ -135,7 +135,7 @@ const InvitePage: NextPage = () => {
             </div>
           </div>
         ) : (
-          <div className="flex flex-col justify-center gap-4 text-center md:text-left">
+          <div className="flex flex-col justify-center gap-3 text-center md:text-left">
             <p className="status-pill mx-auto md:mx-0">Private link</p>
             <h1 className="font-serif text-3xl text-[var(--navy)] sm:text-4xl">Create a location link</h1>
             <p className="muted-copy max-w-[28rem] leading-7">
