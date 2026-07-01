@@ -4,7 +4,7 @@ import { MapContainer, Marker, TileLayer } from "react-leaflet";
 
 interface MyMapProps {
   position1: [number, number];
-  position2: [number, number];
+  position2?: [number, number];
 }
 
 const otherPersonIcon = new L.Icon({
@@ -22,16 +22,26 @@ const currentPersonIcon = new L.Icon({
 });
 
 const MyMap = ({ position1, position2 }: MyMapProps) => {
-  if ((position1[0] === 0 && position1[1] === 0) || (position2[0] === 0 && position2[1] === 0)) return null;
+  const isRealPosition = (position?: [number, number]): position is [number, number] =>
+    !!position &&
+    !(position[0] === 0 && position[1] === 0) &&
+    Number.isFinite(position[0]) &&
+    Number.isFinite(position[1]);
+
+  if (!isRealPosition(position1)) return null;
 
   return (
-    <MapContainer center={position1} zoom={17} className="z-10 h-[min(56vh,26rem)] w-full rounded-3xl">
+    <MapContainer
+      center={position1}
+      zoom={17}
+      className="z-10 h-[calc(100dvh-8.5rem)] min-h-[24rem] w-full rounded-[1.75rem] sm:h-[min(68dvh,38rem)]"
+    >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       <Marker position={position1} icon={currentPersonIcon} />
-      <Marker position={position2} icon={otherPersonIcon} />
+      {isRealPosition(position2) && <Marker position={position2} icon={otherPersonIcon} />}
     </MapContainer>
   );
 };

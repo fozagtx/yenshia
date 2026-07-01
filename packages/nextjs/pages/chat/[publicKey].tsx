@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
-import Image from "next/image";
 import { useRouter } from "next/router";
 import { useMutation } from "@tanstack/react-query";
 import type { NextPage } from "next";
@@ -40,22 +39,22 @@ type SubmitProofApiResponse = {
   error?: string;
 };
 
-const confirmationErrorMessage = (message: string) => {
+const finishErrorMessage = (message: string) => {
   if (
     message.includes("YENSHIA_") ||
     message.includes("publicInputsBase64") ||
     message.includes("proofBytesBase64") ||
     message.includes("real Noir proof")
   ) {
-    return "Confirmation is not ready yet.";
+    return "Finish is not ready yet.";
   }
 
   if (message.includes("STELLAR_") || message.includes("verifier contract")) {
-    return "Confirmation is not ready yet.";
+    return "Finish is not ready yet.";
   }
 
   if (message.includes("transaction") || message.includes("XDR") || message.includes("Soroban")) {
-    return "Confirmation could not be finished.";
+    return "Could not finish.";
   }
 
   return message;
@@ -110,9 +109,9 @@ const ShareLocationPage: NextPage = () => {
   });
 
   const {
-    mutateAsync: verifyProof,
-    error: verificationError,
-    isLoading: isVerifying,
+    mutateAsync: finishSharing,
+    error: finishError,
+    isLoading: isFinishing,
   } = useMutation<SubmitProofApiResponse, Error, string>({
     mutationFn: async walletAddress => {
       const prepareResponse = await fetch("/api/stellar/prepare-proof", {
@@ -127,11 +126,11 @@ const ShareLocationPage: NextPage = () => {
 
       const prepared = (await prepareResponse.json()) as PrepareProofApiResponse;
       if (!prepareResponse.ok) {
-        throw new Error(prepared.success ? "Confirmation could not be prepared." : prepared.error);
+        throw new Error(prepared.success ? "Could not finish." : prepared.error);
       }
 
       if (!prepared.success) {
-        throw new Error(prepared.error || "Confirmation could not be prepared.");
+        throw new Error(prepared.error || "Could not finish.");
       }
 
       const signedTransactionXdr = await signTransaction(prepared.unsignedTransactionXdr, prepared.networkPassphrase);
@@ -147,14 +146,14 @@ const ShareLocationPage: NextPage = () => {
 
       const payload = (await response.json()) as SubmitProofApiResponse;
       if (!response.ok) {
-        throw new Error(payload.error || "Confirmation could not be finished.");
+        throw new Error(payload.error || "Could not finish.");
       }
 
       return payload;
     },
   });
 
-  const onVerifyProof = async () => {
+  const onFinishSharing = async () => {
     setProofResult(null);
 
     try {
@@ -162,7 +161,7 @@ const ShareLocationPage: NextPage = () => {
         throw new Error("Connect your wallet before continuing.");
       }
 
-      const result = await verifyProof(address);
+      const result = await finishSharing(address);
       setProofResult(result);
     } catch {
       setProofResult(null);
@@ -188,9 +187,9 @@ const ShareLocationPage: NextPage = () => {
       <>
         <MetaHeader title="Yenshia | Invalid Invite" />
         <section className="soft-panel mx-auto max-w-2xl space-y-4 p-5 text-center sm:p-6">
-          <p className="status-pill mx-auto">Invalid invite</p>
-          <h1 className="font-serif text-3xl text-[var(--navy)] sm:text-4xl">This invite is not valid.</h1>
-          <p className="muted-copy leading-7">Ask for a fresh Yenshia link before starting private location sharing.</p>
+          <p className="status-pill mx-auto">Invalid link</p>
+          <h1 className="font-serif text-3xl text-[var(--navy)] sm:text-4xl">This link is not valid.</h1>
+          <p className="muted-copy leading-7">Ask for a fresh Yenshia link before sharing location.</p>
         </section>
       </>
     );
@@ -200,19 +199,9 @@ const ShareLocationPage: NextPage = () => {
     return (
       <>
         <MetaHeader title="Yenshia | Start" />
-        <section className="soft-panel mx-auto grid max-w-4xl gap-5 overflow-hidden p-5 sm:p-6 md:grid-cols-[0.9fr_1.1fr]">
-          <Image
-            src="/illustrations/yenshia-illustration-invite.png"
-            alt="People preparing private location sharing"
-            width={720}
-            height={560}
-            priority
-            className="proof-illustration mx-auto w-full max-w-[18rem] md:max-w-[23rem]"
-          />
-          <div className="flex flex-col justify-center gap-4 text-center md:text-left">
-            <p className="status-pill mx-auto md:mx-0">Start from home</p>
-            <h1 className="font-serif text-3xl text-[var(--navy)] sm:text-4xl">Open Yenshia home first.</h1>
-          </div>
+        <section className="soft-panel mx-auto max-w-2xl space-y-4 p-5 text-center sm:p-6">
+          <p className="status-pill mx-auto">Connect wallet</p>
+          <h1 className="font-serif text-3xl text-[var(--navy)] sm:text-4xl">Start from Yenshia home.</h1>
         </section>
       </>
     );
@@ -223,9 +212,9 @@ const ShareLocationPage: NextPage = () => {
       <>
         <MetaHeader title="Yenshia | Share Location" />
         <section className="soft-panel mx-auto max-w-2xl space-y-4 p-5 text-center sm:p-6">
-          <p className="status-pill mx-auto">{derivingAccount ? "Waiting for wallet" : "Private"}</p>
+          <p className="status-pill mx-auto">Private</p>
           <h1 className="font-serif text-3xl text-[var(--navy)] sm:text-4xl">Start sharing location.</h1>
-          <p className="muted-copy leading-7">Confirm once in your wallet so sharing stays private.</p>
+          <p className="muted-copy leading-7">Yenshia needs your wallet once before this link can share privately.</p>
           {derivationError && <p className="text-sm text-[var(--error-red)]">{derivationError.message}</p>}
           <Button
             className="mx-auto whitespace-nowrap"
@@ -233,112 +222,81 @@ const ShareLocationPage: NextPage = () => {
             loading={derivingAccount}
             onClick={onStartPrivateSharing}
           >
-            Confirm in wallet
+            Start
           </Button>
         </section>
       </>
     );
   }
 
-  const relayError = sendRelayError || receiveRelayError;
-  const locationError = sendError || receiveError || relayError;
-  const waitingForPeer = sharingReady && isLinkOwner && !peerLocation;
-  const hasLocationPair = !!coords && !!otherCoords && canSendToPeer;
-  const locationStatus = locationError
+  const locationError = sendError || receiveError || sendRelayError || receiveRelayError;
+  const hasOwnLocation = !!coords;
+  const hasPeerLocation = !!otherCoords && canSendToPeer;
+  const hasLocationPair = hasOwnLocation && hasPeerLocation;
+  const mapPosition2 = hasPeerLocation
+    ? ([otherCoords.latitude, otherCoords.longitude] as [number, number])
+    : undefined;
+  const shareMessage = locationError
     ? locationErrorMessage(locationError.message)
-    : waitingForPeer
-    ? "Waiting for the other phone to open your link."
-    : !canSendToPeer
-    ? "Waiting for the other phone."
     : !isGeolocationAvailable
     ? "Location is not available in this browser."
     : !isGeolocationEnabled
     ? "Allow location to continue."
     : hasLocationPair
-    ? "Both phones are sharing location."
-    : "Waiting for both phones.";
-  const locationPanelTitle = locationError ? "Location paused" : hasLocationPair ? "Ready" : "Waiting for location";
+    ? "Both people are sharing location."
+    : hasOwnLocation
+    ? "Your location is shared. Waiting for the other person."
+    : "Allow location to start sharing.";
 
   return (
     <>
       <MetaHeader title="Yenshia | Share Location" />
 
-      <div className="space-y-6">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <h1 className="font-serif text-3xl text-[var(--navy)] sm:text-4xl md:text-5xl">Share location</h1>
-          {proofResult?.success && <span className="status-pill">Complete</span>}
-        </div>
-
-        <section className="soft-panel overflow-hidden p-4 md:p-6">
-          {hasLocationPair ? (
-            <Map
-              position1={[coords.latitude, coords.longitude]}
-              position2={[otherCoords.latitude, otherCoords.longitude]}
-            />
-          ) : (
-            <div className="grid min-h-[18rem] place-items-center text-center">
-              <div className="max-w-md space-y-3">
-                <h2 className="font-serif text-2xl text-[var(--navy)] sm:text-3xl">{locationPanelTitle}</h2>
-                <p className={locationError ? "leading-7 text-[var(--error-red)]" : "muted-copy leading-7"}>
-                  {locationStatus}
-                </p>
-              </div>
-            </div>
-          )}
-        </section>
-
-        {hasLocationPair && (
-          <section className="soft-panel flex w-full flex-col gap-4 p-5 md:p-6" aria-busy={isVerifying}>
-            <div className="space-y-2">
-              <h2 className="font-serif text-2xl text-[var(--navy)] sm:text-3xl">Ready to confirm</h2>
-              <p className="muted-copy max-w-3xl leading-7">
-                Both phones are sharing location. Confirm once in your wallet to finish.
+      <section className="relative min-h-[calc(100dvh-8.5rem)] overflow-hidden rounded-[1.75rem] bg-[var(--blue-pale)] shadow-[var(--shadow-card)]">
+        {hasOwnLocation ? (
+          <Map position1={[coords.latitude, coords.longitude]} position2={mapPosition2} />
+        ) : (
+          <div className="grid min-h-[calc(100dvh-8.5rem)] place-items-center px-5 pb-28 pt-10 text-center sm:min-h-[34rem]">
+            <div className="max-w-sm space-y-3">
+              <h1 className="font-serif text-3xl text-[var(--navy)] sm:text-4xl">Share location</h1>
+              <p className={locationError ? "leading-7 text-[var(--error-red)]" : "muted-copy leading-7"}>
+                {shareMessage}
               </p>
             </div>
+          </div>
+        )}
 
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-[var(--neutral-muted)]">
-                {proofResult?.success ? "Confirmed." : "Your wallet will ask for one confirmation."}
-              </p>
+        <div className="pointer-events-none absolute inset-x-3 bottom-3 sm:inset-x-4 sm:bottom-4">
+          <div className="pointer-events-auto flex flex-col gap-3 rounded-2xl bg-white/95 p-3 shadow-[var(--shadow-search)] backdrop-blur sm:flex-row sm:items-center sm:justify-between sm:p-4">
+            <p
+              className={
+                locationError
+                  ? "text-sm font-semibold text-[var(--error-red)]"
+                  : "text-sm font-semibold text-[var(--navy)]"
+              }
+            >
+              {proofResult?.success ? "Done." : shareMessage}
+            </p>
+            {hasLocationPair && !proofResult?.success && (
               <Button
                 className="self-start whitespace-nowrap sm:self-auto"
                 type="button"
-                disabled={isVerifying || proofResult?.success}
-                loading={isVerifying}
-                onClick={onVerifyProof}
+                disabled={isFinishing}
+                loading={isFinishing}
+                onClick={onFinishSharing}
               >
-                Confirm
+                Done
               </Button>
-            </div>
-
-            {verificationError && (
-              <p className="break-words text-sm text-[var(--error-red)]">
-                {confirmationErrorMessage(verificationError.message)}
-              </p>
             )}
+          </div>
+        </div>
+      </section>
 
-            {proofResult && (
-              <div className="soft-card space-y-2 break-words p-4 text-sm">
-                <p
-                  className={
-                    proofResult.success ? "font-semibold text-[var(--navy)]" : "font-semibold text-[var(--error-red)]"
-                  }
-                >
-                  {proofResult.success ? "Confirmed" : "Needs attention"}
-                </p>
-                {proofResult.hash && (
-                  <p>
-                    <span className="font-semibold">Reference:</span> {proofResult.hash}
-                  </p>
-                )}
-                {proofResult.error && (
-                  <p className="text-[var(--error-red)]">{confirmationErrorMessage(proofResult.error)}</p>
-                )}
-              </div>
-            )}
-          </section>
-        )}
-      </div>
+      {(finishError || proofResult?.error) && (
+        <p className="mt-3 break-words text-sm text-[var(--error-red)]">
+          {finishErrorMessage((finishError || new Error(proofResult?.error)).message)}
+        </p>
+      )}
     </>
   );
 };

@@ -16,12 +16,12 @@ const steps = [
   },
   {
     title: "Share live location",
-    copy: "Each person joins from their own phone and shares location privately.",
+    copy: "Each person opens the link and shares location privately.",
     icon: MapPinIcon,
   },
   {
     title: "Keep it private",
-    copy: "Location details stay between the two phones.",
+    copy: "Location details stay between the two people.",
     icon: ShieldCheckIcon,
   },
 ];
