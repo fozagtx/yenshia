@@ -73,15 +73,3 @@ key to `circuits/yenshia_location/target/vk`.
 `zk:prove` requires a real `Prover.toml`; no sample private coordinates are
 checked in. It writes `proof`, `public_inputs`, and verifies them locally with
 `bb verify`.
-
-## No Fake Proof Policy
-
-- No mock proofs.
-- No substitute proof data.
-- No generated test wallets for live submissions.
-- No simulated verifier success.
-- No fake transaction hashes or explorer links.
-
-If the real prover input, verifier contract, signed transaction XDR, or Stellar
-RPC configuration is missing, the app blocks the proof submission flow and
-reports the missing requirement.
