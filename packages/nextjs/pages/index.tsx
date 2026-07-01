@@ -104,7 +104,7 @@ const HomePage: NextPage = () => {
           </div>
         </div>
 
-        <div className="relative grid aspect-[1.16/1] w-full place-items-center overflow-hidden rounded-[24px] bg-white/40 shadow-[var(--shadow-card)] md:aspect-[1.2/1] md:rounded-[32px]">
+        <div className="relative grid aspect-[1.16/1] w-full place-items-center overflow-hidden rounded-3xl bg-white/40 shadow-[var(--shadow-card)] md:aspect-[1.2/1]">
           <Image
             src="/illustrations/yenshia-illustration-location.png"
             alt="People sharing location in a private Yenshia session"

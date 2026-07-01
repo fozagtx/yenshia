@@ -33,10 +33,10 @@ const InvitePage: NextPage = () => {
     return (
       <>
         <MetaHeader title="Yenshia | Invalid Invite" />
-        <section className="soft-panel mx-auto max-w-xl space-y-4 p-6 text-center">
+        <section className="soft-panel mx-auto max-w-xl space-y-4 p-5 text-center sm:p-6">
           <p className="status-pill mx-auto">Invite blocked</p>
-          <h1 className="font-serif text-4xl text-[var(--navy)]">Invalid invite key</h1>
-          <p className="muted-copy leading-7">This link does not contain a valid encrypted-session public key.</p>
+          <h1 className="font-serif text-3xl text-[var(--navy)] sm:text-4xl">This link is not valid.</h1>
+          <p className="muted-copy leading-7">Ask for a fresh Yenshia link before sharing location.</p>
           <Link href="/" className="inline-flex">
             <Button color="secondary">Back</Button>
           </Link>
@@ -49,9 +49,9 @@ const InvitePage: NextPage = () => {
     return (
       <>
         <MetaHeader title="Yenshia | Start" />
-        <section className="soft-panel mx-auto max-w-xl space-y-4 p-6 text-center">
-          <p className="status-pill mx-auto">Start on Yenshia home</p>
-          <h1 className="font-serif text-4xl text-[var(--navy)]">Open Yenshia home first.</h1>
+        <section className="soft-panel mx-auto max-w-xl space-y-4 p-5 text-center sm:p-6">
+          <p className="status-pill mx-auto">Start from home</p>
+          <h1 className="font-serif text-3xl text-[var(--navy)] sm:text-4xl">Open Yenshia home first.</h1>
         </section>
       </>
     );
@@ -62,25 +62,25 @@ const InvitePage: NextPage = () => {
   return (
     <>
       <MetaHeader title="Yenshia | Join Location Session" />
-      <section className="soft-panel mx-auto flex max-w-xl flex-col items-center gap-5 p-6 text-center">
+      <section className="soft-panel mx-auto flex max-w-xl flex-col items-center gap-5 p-5 text-center sm:p-6">
         <p className="status-pill">
           <span className="status-dot" />
-          Invite verified
+          Private link
         </p>
-        <h1 className="font-serif text-4xl text-[var(--navy)]">Start location sharing</h1>
+        <h1 className="font-serif text-3xl text-[var(--navy)] sm:text-4xl">Join location sharing</h1>
         <p className="w-full break-words rounded-xl border border-[rgba(189,215,255,0.28)] bg-white/80 p-4 font-mono text-sm text-[var(--navy)]">
           {inviteLink}
         </p>
-        <div className="flex w-full flex-col gap-3 sm:flex-row sm:justify-center">
+        <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
           <CopyButton text={inviteLink} color="secondary">
-            Copy invite
+            Copy link
           </CopyButton>
           <Link href="/">
             <Button color="secondary">Decline</Button>
           </Link>
         </div>
         <Link href={`/chat/${inviterPublicKey}`}>
-          <Button className="min-w-[15rem]">Start</Button>
+          <Button>Join</Button>
         </Link>
       </section>
     </>

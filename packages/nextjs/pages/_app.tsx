@@ -16,7 +16,7 @@ const YenshiaApp = ({ Component, pageProps }: AppProps) => {
   return (
     <QueryClientProvider client={queryClient}>
       <Head>
-        <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
       </Head>
       {hasMounted ? (
         <StellarWalletProvider>

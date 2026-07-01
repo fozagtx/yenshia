@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowRightOnRectangleIcon, WalletIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import { Button } from "~~/components/ui/Button";
 import { useStellarWallet } from "~~/sdk/stellar-wallet";
@@ -28,6 +28,19 @@ export const StellarWalletButton = ({
       .catch(() => undefined);
   };
 
+  useEffect(() => {
+    if (!isWalletModalOpen) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsWalletModalOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isWalletModalOpen]);
+
   if (!address) {
     return (
       <div className={className}>
@@ -45,13 +58,16 @@ export const StellarWalletButton = ({
         {isWalletModalOpen && (
           <div
             aria-modal="true"
+            aria-labelledby="stellar-wallet-modal-title"
             className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(0,34,89,0.24)] px-4"
             role="dialog"
           >
             <div className="soft-panel w-full max-w-md p-4 shadow-[var(--shadow-card)]">
               <div className="flex items-start justify-between gap-3">
                 <div className="space-y-1">
-                  <h2 className="font-serif text-3xl text-[var(--navy)]">Connect Stellar wallet</h2>
+                  <h2 id="stellar-wallet-modal-title" className="font-serif text-3xl text-[var(--navy)]">
+                    Connect Stellar wallet
+                  </h2>
                   <p className="text-sm leading-6 text-[var(--neutral-muted)]">Choose your wallet to continue.</p>
                 </div>
                 <button

@@ -120,12 +120,10 @@ const LocationSessionPage: NextPage = () => {
     return (
       <>
         <MetaHeader title="Yenshia | Invalid Invite" />
-        <section className="soft-panel mx-auto max-w-3xl space-y-4 p-6 text-center md:p-8">
+        <section className="soft-panel mx-auto max-w-2xl space-y-4 p-5 text-center sm:p-6">
           <p className="status-pill mx-auto">Invalid invite</p>
-          <h1 className="font-serif text-4xl text-[var(--navy)]">This invite is not valid.</h1>
-          <p className="muted-copy leading-7">
-            Open a valid Yenshia invite link before starting private location sharing.
-          </p>
+          <h1 className="font-serif text-3xl text-[var(--navy)] sm:text-4xl">This invite is not valid.</h1>
+          <p className="muted-copy leading-7">Ask for a fresh Yenshia link before starting private location sharing.</p>
         </section>
       </>
     );
@@ -135,18 +133,18 @@ const LocationSessionPage: NextPage = () => {
     return (
       <>
         <MetaHeader title="Yenshia | Start" />
-        <section className="soft-panel mx-auto grid max-w-5xl gap-8 overflow-hidden p-6 md:grid-cols-[0.9fr_1.1fr] md:p-8">
+        <section className="soft-panel mx-auto grid max-w-4xl gap-5 overflow-hidden p-5 sm:p-6 md:grid-cols-[0.9fr_1.1fr]">
           <Image
             src="/illustrations/yenshia-illustration-invite.png"
             alt="People preparing a private location session"
             width={720}
             height={560}
             priority
-            className="proof-illustration mx-auto w-full max-w-[24rem]"
+            className="proof-illustration mx-auto w-full max-w-[18rem] md:max-w-[23rem]"
           />
           <div className="flex flex-col justify-center gap-4 text-center md:text-left">
-            <p className="status-pill mx-auto md:mx-0">Start on Yenshia home</p>
-            <h1 className="font-serif text-4xl text-[var(--navy)]">Open Yenshia home first.</h1>
+            <p className="status-pill mx-auto md:mx-0">Start from home</p>
+            <h1 className="font-serif text-3xl text-[var(--navy)] sm:text-4xl">Open Yenshia home first.</h1>
           </div>
         </section>
       </>
@@ -156,18 +154,19 @@ const LocationSessionPage: NextPage = () => {
   if (!derivedAccountReady) {
     return (
       <>
-        <MetaHeader title="Yenshia | Wallet Signature Required" />
-        <section className="soft-panel mx-auto max-w-3xl space-y-4 p-6 text-center md:p-8">
-          <p className="status-pill mx-auto">
-            {derivingAccount ? "Waiting for wallet signature" : "Signature required"}
-          </p>
-          <h1 className="font-serif text-4xl text-[var(--navy)]">Session key is not ready.</h1>
-          <p className="muted-copy leading-7">
-            Prepare the private session key when you are ready to start encrypted location sharing.
-          </p>
+        <MetaHeader title="Yenshia | Private Session" />
+        <section className="soft-panel mx-auto max-w-2xl space-y-4 p-5 text-center sm:p-6">
+          <p className="status-pill mx-auto">{derivingAccount ? "Waiting for wallet" : "Private session"}</p>
+          <h1 className="font-serif text-3xl text-[var(--navy)] sm:text-4xl">Start the private session.</h1>
+          <p className="muted-copy leading-7">Confirm once in your wallet so this location session can stay private.</p>
           {derivationError && <p className="text-sm text-[var(--error-red)]">{derivationError.message}</p>}
-          <Button disabled={derivingAccount} loading={derivingAccount} onClick={onPrepareSessionKey}>
-            Prepare session key
+          <Button
+            className="mx-auto whitespace-nowrap"
+            disabled={derivingAccount}
+            loading={derivingAccount}
+            onClick={onPrepareSessionKey}
+          >
+            Confirm in wallet
           </Button>
         </section>
       </>
@@ -180,8 +179,8 @@ const LocationSessionPage: NextPage = () => {
     : !isGeolocationEnabled
     ? "Enable geolocation to share a real location."
     : hasLocationPair
-    ? "Live locations received."
-    : "Waiting for both live locations.";
+    ? "Both locations are ready."
+    : "Waiting for both phones.";
 
   return (
     <>
@@ -194,7 +193,7 @@ const LocationSessionPage: NextPage = () => {
               <span className={hasLocationPair ? "status-dot" : "h-2 w-2 rounded-full bg-[var(--blue-sky)]"} />
               {hasLocationPair ? "Location ready" : "Location session"}
             </p>
-            <h1 className="font-serif text-4xl text-[var(--navy)] md:text-5xl">Private location session</h1>
+            <h1 className="font-serif text-3xl text-[var(--navy)] sm:text-4xl md:text-5xl">Private location session</h1>
           </div>
           {proofResult?.finalStatus && <span className="status-pill">{proofResult.finalStatus}</span>}
         </div>
@@ -206,9 +205,9 @@ const LocationSessionPage: NextPage = () => {
               position2={[otherCoords.latitude, otherCoords.longitude]}
             />
           ) : (
-            <div className="grid min-h-[22rem] items-center gap-6 md:grid-cols-[1fr_0.9fr]">
+            <div className="grid min-h-[18rem] items-center gap-5 md:grid-cols-[1fr_0.9fr]">
               <div className="space-y-4 text-center md:text-left">
-                <h2 className="font-serif text-3xl text-[var(--navy)]">Real location required</h2>
+                <h2 className="font-serif text-2xl text-[var(--navy)] sm:text-3xl">Location access needed</h2>
                 <p className="muted-copy leading-7">{locationStatus}</p>
               </div>
               <Image
@@ -216,7 +215,7 @@ const LocationSessionPage: NextPage = () => {
                 alt="People sharing a private location session"
                 width={1945}
                 height={808}
-                className="proof-illustration mx-auto w-full max-w-[30rem]"
+                className="proof-illustration mx-auto w-full max-w-[22rem] md:max-w-[28rem]"
               />
             </div>
           )}
@@ -224,22 +223,27 @@ const LocationSessionPage: NextPage = () => {
 
         <section className="soft-panel flex w-full flex-col gap-4 p-5 md:p-6">
           <div className="space-y-2">
-            <h2 className="font-serif text-3xl text-[var(--navy)]">Sign Stellar XDR</h2>
+            <h2 className="font-serif text-2xl text-[var(--navy)] sm:text-3xl">Sign Stellar transaction</h2>
             <p className="muted-copy leading-7">
-              Paste unsigned Stellar transaction XDR, then sign it with your Stellar wallet.
+              Paste the unsigned Stellar transaction, then sign it with your wallet.
             </p>
           </div>
 
+          <label className="text-sm font-semibold text-[var(--navy)]" htmlFor="unsigned-transaction-xdr">
+            Unsigned transaction
+          </label>
           <textarea
+            id="unsigned-transaction-xdr"
             className="textarea min-h-[8rem] w-full font-mono text-xs"
             value={unsignedTransactionXdr}
             onChange={event => setUnsignedTransactionXdr(event.target.value)}
-            placeholder="Unsigned Stellar transaction XDR"
+            placeholder="Paste unsigned Stellar transaction"
           />
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm text-[var(--neutral-muted)]">Only signed Stellar XDR can be submitted.</p>
+            <p className="text-sm text-[var(--neutral-muted)]">Only a signed Stellar transaction can be sent.</p>
             <Button
+              className="self-start whitespace-nowrap sm:self-auto"
               type="button"
               disabled={!hasLocationPair || !address || isSigning || unsignedTransactionXdr.trim().length === 0}
               loading={isSigning}
@@ -254,27 +258,32 @@ const LocationSessionPage: NextPage = () => {
 
         <form className="soft-panel flex w-full flex-col gap-4 p-5 md:p-6" onSubmit={onSubmitProof}>
           <div className="space-y-2">
-            <h2 className="font-serif text-3xl text-[var(--navy)]">Submit signed XDR</h2>
+            <h2 className="font-serif text-2xl text-[var(--navy)] sm:text-3xl">Send signed transaction</h2>
             <p className="muted-copy leading-7">
-              Paste the signed Stellar transaction XDR for the real verifier call. Empty or unsigned data stays blocked.
+              Paste the signed Stellar transaction for the real on-chain call. Empty or unsigned data stays blocked.
             </p>
           </div>
 
+          <label className="text-sm font-semibold text-[var(--navy)]" htmlFor="signed-transaction-xdr">
+            Signed transaction
+          </label>
           <textarea
+            id="signed-transaction-xdr"
             className="textarea min-h-[11rem] w-full font-mono text-xs"
             value={signedTransactionXdr}
             onChange={event => setSignedTransactionXdr(event.target.value)}
-            placeholder="Signed Stellar transaction XDR"
+            placeholder="Paste signed Stellar transaction"
           />
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-[var(--neutral-muted)]">{locationStatus}</p>
             <Button
+              className="self-start whitespace-nowrap sm:self-auto"
               type="submit"
               disabled={!hasLocationPair || isLoading || signedTransactionXdr.trim().length === 0}
               loading={isLoading}
             >
-              Submit transaction
+              Send transaction
             </Button>
           </div>
 

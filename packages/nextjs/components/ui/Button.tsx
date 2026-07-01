@@ -22,10 +22,10 @@ const buttonVariants = cva(
         neutral: "btn-neutral focus:ring-neutral/30",
       },
       size: {
-        xs: "btn-xs h-8 min-w-[5.7rem] px-3.5",
-        sm: "btn-sm h-9 min-w-[6.4125rem] px-4",
-        md: "h-10 min-w-[7.125rem] px-5",
-        lg: "btn-lg h-11 min-w-[7.8375rem] px-6",
+        xs: "btn-xs h-8 px-3",
+        sm: "btn-sm h-9 px-3.5",
+        md: "h-10 px-4",
+        lg: "btn-lg h-11 px-5",
       },
       variant: {
         solid: "",
