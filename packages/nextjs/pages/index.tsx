@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import type { NextPage } from "next";
 import { EnvelopeIcon, MapPinIcon, ShieldCheckIcon } from "@heroicons/react/24/solid";
 import { MetaHeader } from "~~/components/MetaHeader";
@@ -44,7 +45,11 @@ const faqs = [
 ];
 
 const HomePage: NextPage = () => {
+  const router = useRouter();
   const { address } = useStellarWallet();
+  const goToInvite = () => {
+    void router.push("/invite");
+  };
 
   return (
     <>
@@ -73,7 +78,12 @@ const HomePage: NextPage = () => {
                 Start session
               </Link>
             ) : (
-              <StellarWalletButton className="connect-shell landing-connect" label="Connect wallet" showError={false} />
+              <StellarWalletButton
+                className="connect-shell landing-connect"
+                label="Connect wallet"
+                onConnected={goToInvite}
+                showError={false}
+              />
             )}
             <Link
               href="#how"
@@ -149,7 +159,12 @@ const HomePage: NextPage = () => {
             App
           </Link>
         ) : (
-          <StellarWalletButton className="connect-shell" label="Connect wallet" showError={false} />
+          <StellarWalletButton
+            className="connect-shell"
+            label="Connect wallet"
+            onConnected={goToInvite}
+            showError={false}
+          />
         )}
       </footer>
     </>

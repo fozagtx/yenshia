@@ -7,10 +7,12 @@ const shortenAddress = (address: string) => `${address.slice(0, 6)}...${address.
 export const StellarWalletButton = ({
   className,
   label = "Connect wallet",
+  onConnected,
   showError = true,
 }: {
   className?: string;
   label?: string;
+  onConnected?: () => void | Promise<void>;
   showError?: boolean;
 }) => {
   const { address, connect, disconnect, error, isConnecting, showProfile } = useStellarWallet();
@@ -22,7 +24,9 @@ export const StellarWalletButton = ({
           leftIcon={<WalletIcon className="h-5 w-5" />}
           loading={isConnecting}
           onClick={() => {
-            void connect().catch(() => undefined);
+            void connect()
+              .then(() => onConnected?.())
+              .catch(() => undefined);
           }}
         >
           {label}
