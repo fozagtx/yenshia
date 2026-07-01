@@ -408,6 +408,42 @@ p {
   white-space: nowrap;
 }
 
+.location-summary-actions {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  border-top: 1px solid rgba(189, 215, 255, 0.42);
+  padding-top: 0.42rem;
+}
+
+.location-save-button,
+.location-save-button.btn {
+  min-height: 2rem;
+  border-radius: 12px;
+  padding: 0.34rem 0.72rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.location-save-note {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--neutral-muted);
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.location-save-note--error {
+  color: var(--error-red);
+}
+
 @media (min-width: 640px) {
   .landing-connect button {
     width: auto;
@@ -415,5 +451,21 @@ p {
 
   .location-summary-strip {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .location-summary-actions {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 420px) {
+  .location-summary-actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .location-save-note {
+    text-align: left;
+    white-space: normal;
   }
 }

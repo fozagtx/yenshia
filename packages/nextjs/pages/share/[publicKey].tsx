@@ -35,12 +35,69 @@ type LocationCoordinates = {
   longitude: number;
 };
 
+type SavedLocationSnapshot = {
+  id: string;
+  savedAt: string;
+  sessionPublicKey: string;
+  selfName: string;
+  self: LocationCoordinates;
+  peerName: string;
+  peer: LocationCoordinates | null;
+};
+
+const savedLocationsStorageKey = "yenshia.savedLocations.v1";
+
 const formatCoordinate = (value: number) => value.toFixed(5);
 
 const formatLocationCoordinates = (position?: LocationCoordinates | null) => {
   if (!position) return "Waiting";
 
   return `${formatCoordinate(position.latitude)}, ${formatCoordinate(position.longitude)}`;
+};
+
+const formatSavedLocationTime = (savedAt: string) => {
+  const savedDate = new Date(savedAt);
+
+  if (Number.isNaN(savedDate.getTime())) return "just now";
+
+  return new Intl.DateTimeFormat(undefined, {
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(savedDate);
+};
+
+const isSavedLocationSnapshot = (value: unknown): value is SavedLocationSnapshot => {
+  if (!value || typeof value !== "object") return false;
+
+  const snapshot = value as Partial<SavedLocationSnapshot>;
+  return (
+    typeof snapshot.id === "string" &&
+    typeof snapshot.savedAt === "string" &&
+    typeof snapshot.sessionPublicKey === "string" &&
+    typeof snapshot.selfName === "string" &&
+    typeof snapshot.peerName === "string" &&
+    !!snapshot.self &&
+    typeof snapshot.self.latitude === "number" &&
+    typeof snapshot.self.longitude === "number"
+  );
+};
+
+const readSavedLocationSnapshots = () => {
+  if (typeof window === "undefined") return [] as SavedLocationSnapshot[];
+
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(savedLocationsStorageKey) ?? "[]");
+    return Array.isArray(parsed) ? parsed.filter(isSavedLocationSnapshot) : [];
+  } catch {
+    return [] as SavedLocationSnapshot[];
+  }
+};
+
+const persistSavedLocationSnapshot = (snapshot: SavedLocationSnapshot) => {
+  if (typeof window === "undefined") return;
+
+  const savedSnapshots = readSavedLocationSnapshots();
+  window.localStorage.setItem(savedLocationsStorageKey, JSON.stringify([snapshot, ...savedSnapshots].slice(0, 8)));
 };
 
 const ShareLocationPage: NextPage = () => {
@@ -55,6 +112,8 @@ const ShareLocationPage: NextPage = () => {
   const [participantId, setParticipantId] = useState<string | null>(null);
   const [participantIdentityError, setParticipantIdentityError] = useState<Error | null>(null);
   const [locationRequested, setLocationRequested] = useState(false);
+  const [savedLocationSnapshot, setSavedLocationSnapshot] = useState<SavedLocationSnapshot | null>(null);
+  const [saveLocationError, setSaveLocationError] = useState<string | null>(null);
   const joinFromInvite = router.query.join === "1" || router.query.share === "1";
   const startFromInvite = router.query.start === "1";
   const currentDisplayName = cleanDisplayName(router.query.name) || "You";
@@ -160,6 +219,17 @@ const ShareLocationPage: NextPage = () => {
     participantId,
   ]);
 
+  useEffect(() => {
+    if (!hasMounted || !publicKey) return;
+
+    const latestSavedSnapshot =
+      readSavedLocationSnapshots().find(
+        snapshot => snapshot.sessionPublicKey.toLowerCase() === publicKey.toLowerCase(),
+      ) ?? null;
+    setSavedLocationSnapshot(latestSavedSnapshot);
+    setSaveLocationError(null);
+  }, [hasMounted, publicKey]);
+
   if (!hasMounted) {
     return null;
   }
@@ -244,6 +314,42 @@ const ShareLocationPage: NextPage = () => {
   const peerStatusText = hasPeerLocation ? "Pinned on map" : "Waiting for other person";
   const ownLocationText = formatLocationCoordinates(coords);
   const peerLocationText = hasPeerLocation ? formatLocationCoordinates(otherCoords) : "Waiting";
+  const saveLocationStatusText = saveLocationError
+    ? saveLocationError
+    : savedLocationSnapshot
+    ? `Saved locally ${formatSavedLocationTime(savedLocationSnapshot.savedAt)}`
+    : "Only on this device";
+
+  const onSaveLocation = () => {
+    if (!coords || !publicKey) return;
+
+    const snapshot: SavedLocationSnapshot = {
+      id: `${publicKey}-${Date.now()}`,
+      savedAt: new Date().toISOString(),
+      sessionPublicKey: publicKey,
+      selfName: currentDisplayName,
+      self: {
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+      },
+      peerName: peerDisplayName,
+      peer:
+        hasPeerLocation && otherCoords
+          ? {
+              latitude: otherCoords.latitude,
+              longitude: otherCoords.longitude,
+            }
+          : null,
+    };
+
+    try {
+      persistSavedLocationSnapshot(snapshot);
+      setSavedLocationSnapshot(snapshot);
+      setSaveLocationError(null);
+    } catch {
+      setSaveLocationError("Could not save in this browser");
+    }
+  };
 
   return (
     <>
@@ -338,6 +444,14 @@ const ShareLocationPage: NextPage = () => {
             <span className="location-summary-dot location-summary-dot--peer" aria-hidden="true" />
             <span className="location-summary-name">{peerDisplayName}</span>
             <span className="location-summary-coords">{peerLocationText}</span>
+          </div>
+          <div className="location-summary-actions">
+            <Button className="location-save-button" type="button" onClick={onSaveLocation}>
+              Save location
+            </Button>
+            <span className={saveLocationError ? "location-save-note location-save-note--error" : "location-save-note"}>
+              {saveLocationStatusText}
+            </span>
           </div>
         </div>
       )}
