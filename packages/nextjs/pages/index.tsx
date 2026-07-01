@@ -95,12 +95,6 @@ const HomePage: NextPage = () => {
                 showError={false}
               />
             )}
-            <Link
-              href="#how"
-              className="inline-flex h-11 w-full items-center justify-center rounded-2xl border border-[rgba(0,37,97,0.08)] bg-white px-6 text-sm font-semibold text-[var(--blue-primary)] sm:w-auto"
-            >
-              How it works
-            </Link>
           </div>
         </div>
 
