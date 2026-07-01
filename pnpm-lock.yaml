@@ -83,6 +83,9 @@ importers:
       tailwind-merge:
         specifier: ^1.14.0
         version: 1.14.0
+      uint8arrays:
+        specifier: ^5.1.1
+        version: 5.1.1
     devDependencies:
       '@tanstack/eslint-plugin-query':
         specifier: ^4.36.1
