@@ -87,11 +87,12 @@ const ShareLocationPage: NextPage = () => {
   const [participantId, setParticipantId] = useState<string | null>(null);
   const [participantIdentityError, setParticipantIdentityError] = useState<Error | null>(null);
   const [locationRequested, setLocationRequested] = useState(false);
-  const shareFromInvite = router.query.share === "1";
+  const joinFromInvite = router.query.join === "1" || router.query.share === "1";
+  const startFromInvite = router.query.start === "1";
   const [proofResult, setProofResult] = useState<SubmitProofApiResponse | null>(null);
   const sharePageReady = !!address && !!publicKey && !!participantId && !participantIdentityError;
   const privateSharingReady = sharePageReady && derivedAccountReady;
-  const isInviteParticipant = shareFromInvite;
+  const isInviteParticipant = joinFromInvite;
   const isLinkOwner =
     !!publicKey &&
     !!derivedAccount &&
@@ -124,7 +125,9 @@ const ShareLocationPage: NextPage = () => {
     coords,
     isGeolocationAvailable,
     isGeolocationEnabled,
+    lastSentAt,
     locationError: locationAccessError,
+    sendError,
   } = useSendLocation({
     enabled: locationRequested,
     linkPublicKey: publicKey,
@@ -215,10 +218,35 @@ const ShareLocationPage: NextPage = () => {
   }, [address, hasMounted, publicKey, router]);
 
   useEffect(() => {
-    if (router.isReady && shareFromInvite) {
+    if (router.isReady && (joinFromInvite || startFromInvite)) {
       setLocationRequested(true);
     }
-  }, [router.isReady, shareFromInvite]);
+  }, [joinFromInvite, router.isReady, startFromInvite]);
+
+  useEffect(() => {
+    if (
+      !address ||
+      !locationRequested ||
+      !coords ||
+      !participantId ||
+      derivedAccountReady ||
+      derivingAccount ||
+      derivationError
+    ) {
+      return;
+    }
+
+    void deriveAccount().catch(() => undefined);
+  }, [
+    address,
+    coords,
+    derivationError,
+    deriveAccount,
+    derivedAccountReady,
+    derivingAccount,
+    locationRequested,
+    participantId,
+  ]);
 
   if (!hasMounted) {
     return null;
@@ -249,10 +277,11 @@ const ShareLocationPage: NextPage = () => {
     );
   }
 
-  const locationError = locationAccessError || participantIdentityError || receiveError;
+  const locationError = locationAccessError || sendError || participantIdentityError || derivationError || receiveError;
   const hasOwnLocation = !!coords;
   const hasPeerLocation = !!otherCoords && canSendToPeer;
   const hasLocationPair = hasOwnLocation && hasPeerLocation;
+  const hasPublishedLocation = !!lastSentAt && canSendToPeer;
   const mapPosition2 = hasPeerLocation
     ? ([otherCoords.latitude, otherCoords.longitude] as [number, number])
     : undefined;
@@ -264,12 +293,16 @@ const ShareLocationPage: NextPage = () => {
     ? "Location is not available in this browser."
     : !isGeolocationEnabled
     ? "Turn on location access."
-    : hasLocationPair
+    : hasLocationPair && hasPublishedLocation
     ? "Both people are sharing location."
+    : hasPublishedLocation
+    ? "Your location is shared. Waiting for the other person."
+    : hasOwnLocation && derivingAccount
+    ? "Confirm in your wallet to share privately."
+    : hasOwnLocation && !derivedAccountReady
+    ? "Preparing private sharing."
     : hasOwnLocation
-    ? derivedAccountReady
-      ? "Your location is shared. Waiting for the other person."
-      : "Location is on."
+    ? "Location is ready. Waiting for the other person."
     : "Waiting for your location.";
   const bottomMessage = proofResult?.success ? "Done." : shareMessage;
 
@@ -310,7 +343,7 @@ const ShareLocationPage: NextPage = () => {
               >
                 {bottomMessage}
               </p>
-              {!derivedAccountReady ? (
+              {!derivedAccountReady && derivationError ? (
                 <Button
                   className="self-start whitespace-nowrap sm:self-auto"
                   type="button"
@@ -318,7 +351,7 @@ const ShareLocationPage: NextPage = () => {
                   loading={derivingAccount}
                   onClick={onStartPrivateSharing}
                 >
-                  Share privately
+                  Try again
                 </Button>
               ) : (
                 hasLocationPair &&
@@ -339,9 +372,9 @@ const ShareLocationPage: NextPage = () => {
         )}
       </section>
 
-      {(derivationError || finishError || proofResult?.error) && (
+      {(finishError || proofResult?.error) && (
         <p className="mt-3 break-words text-sm text-[var(--error-red)]">
-          {derivationError?.message || finishErrorMessage((finishError || new Error(proofResult?.error)).message)}
+          {finishErrorMessage((finishError || new Error(proofResult?.error)).message)}
         </p>
       )}
     </>

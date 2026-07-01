@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
@@ -18,6 +18,8 @@ const InvitePage: NextPage = () => {
   const router = useRouter();
   const { address } = useStellarWallet();
   const { derivationError, derivedAccount, deriveAccount, derivingAccount } = useDerivedAccount();
+  const [locationError, setLocationError] = useState<string | null>(null);
+  const [requestingLocation, setRequestingLocation] = useState(false);
 
   const hasMounted = useHasMounted();
 
@@ -46,6 +48,32 @@ const InvitePage: NextPage = () => {
   const inviteLink = derivedAccount ? `${window.location.origin}/invite/${derivedAccount.publicKey}` : "";
   const onCreateInvite = () => {
     void deriveAccount().catch(() => undefined);
+  };
+  const onShareLocation = () => {
+    if (!derivedAccount) return;
+
+    setLocationError(null);
+
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      setLocationError("Location is not available in this browser.");
+      return;
+    }
+
+    setRequestingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      () => {
+        void router.push(`/share/${derivedAccount.publicKey}?start=1`);
+      },
+      error => {
+        setRequestingLocation(false);
+        setLocationError(error.message || "Turn on location access.");
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 5000,
+        timeout: 10000,
+      },
+    );
   };
 
   return (
@@ -91,13 +119,20 @@ const InvitePage: NextPage = () => {
               {inviteLink}
             </p>
 
-            <CopyButton
-              text={inviteLink}
-              className="self-center"
-              leftIcon={<ClipboardDocumentIcon className="h-5 w-5" />}
-            >
-              Copy link
-            </CopyButton>
+            {locationError && <p className="text-sm text-[var(--error-red)]">{locationError}</p>}
+
+            <div className="flex flex-col items-center gap-3 sm:flex-row">
+              <CopyButton
+                text={inviteLink}
+                className="self-center"
+                leftIcon={<ClipboardDocumentIcon className="h-5 w-5" />}
+              >
+                Copy link
+              </CopyButton>
+              <Button disabled={requestingLocation} loading={requestingLocation} onClick={onShareLocation}>
+                Share location
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="flex flex-col justify-center gap-4 text-center md:text-left">
