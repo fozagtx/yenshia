@@ -77,8 +77,10 @@ const ShareLocationPage: NextPage = () => {
   const hasMounted = useHasMounted();
   const { address, signTransaction } = useStellarWallet();
   const { derivationError, derivedAccount, derivedAccountReady, deriveAccount, derivingAccount } = useDerivedAccount();
+  const [locationRequested, setLocationRequested] = useState(false);
   const [proofResult, setProofResult] = useState<SubmitProofApiResponse | null>(null);
-  const sharingReady = !!address && !!publicKey && derivedAccountReady;
+  const sharePageReady = !!address && !!publicKey;
+  const privateSharingReady = sharePageReady && derivedAccountReady;
   const isLinkOwner =
     !!publicKey && !!derivedAccount && publicKey.toLowerCase() === derivedAccount.publicKey.toLowerCase();
 
@@ -88,11 +90,15 @@ const ShareLocationPage: NextPage = () => {
     receiveError,
     relayError: receiveRelayError,
   } = useReceiveLocation({
-    enabled: sharingReady,
+    enabled: privateSharingReady,
     expectedSenderPublicKey: isLinkOwner ? undefined : publicKey,
-    linkPublicKey: sharingReady ? publicKey : undefined,
+    linkPublicKey: privateSharingReady ? publicKey : undefined,
   });
-  const recipientPublicKey = sharingReady ? (isLinkOwner ? peerLocation?.senderPublicKey : publicKey) : undefined;
+  const recipientPublicKey = privateSharingReady
+    ? isLinkOwner
+      ? peerLocation?.senderPublicKey
+      : publicKey
+    : undefined;
   const canSendToPeer =
     !!recipientPublicKey &&
     !!derivedAccount &&
@@ -104,8 +110,8 @@ const ShareLocationPage: NextPage = () => {
     relayError: sendRelayError,
     sendError,
   } = useSendLocation({
-    enabled: sharingReady,
-    linkPublicKey: sharingReady ? publicKey : undefined,
+    enabled: locationRequested,
+    linkPublicKey: publicKey,
     recipientPublicKey: canSendToPeer ? recipientPublicKey : undefined,
   });
 
@@ -208,28 +214,6 @@ const ShareLocationPage: NextPage = () => {
     );
   }
 
-  if (!derivedAccountReady) {
-    return (
-      <>
-        <MetaHeader title="Yenshia | Share Location" />
-        <section className="soft-panel mx-auto max-w-2xl space-y-4 p-5 text-center sm:p-6">
-          <p className="status-pill mx-auto">Private</p>
-          <h1 className="font-serif text-3xl text-[var(--navy)] sm:text-4xl">Start sharing location.</h1>
-          <p className="muted-copy leading-7">Yenshia needs your wallet once before this link can share privately.</p>
-          {derivationError && <p className="text-sm text-[var(--error-red)]">{derivationError.message}</p>}
-          <Button
-            className="mx-auto whitespace-nowrap"
-            disabled={derivingAccount}
-            loading={derivingAccount}
-            onClick={onStartPrivateSharing}
-          >
-            Start
-          </Button>
-        </section>
-      </>
-    );
-  }
-
   const locationError = sendError || receiveError || sendRelayError || receiveRelayError;
   const hasOwnLocation = !!coords;
   const hasPeerLocation = !!otherCoords && canSendToPeer;
@@ -237,7 +221,9 @@ const ShareLocationPage: NextPage = () => {
   const mapPosition2 = hasPeerLocation
     ? ([otherCoords.latitude, otherCoords.longitude] as [number, number])
     : undefined;
-  const shareMessage = locationError
+  const shareMessage = !locationRequested
+    ? "Choose when to share your location."
+    : locationError
     ? locationErrorMessage(locationError.message)
     : !isGeolocationAvailable
     ? "Location is not available in this browser."
@@ -246,8 +232,11 @@ const ShareLocationPage: NextPage = () => {
     : hasLocationPair
     ? "Both people are sharing location."
     : hasOwnLocation
-    ? "Your location is shared. Waiting for the other person."
+    ? derivedAccountReady
+      ? "Your location is shared. Waiting for the other person."
+      : "Location is on."
     : "Waiting for your location.";
+  const bottomMessage = proofResult?.success ? "Done." : shareMessage;
 
   return (
     <>
@@ -258,11 +247,16 @@ const ShareLocationPage: NextPage = () => {
           <Map position1={[coords.latitude, coords.longitude]} position2={mapPosition2} />
         ) : (
           <div className="grid min-h-[calc(100dvh-8.5rem)] place-items-center px-5 pb-28 pt-10 text-center sm:min-h-[34rem]">
-            <div className="max-w-sm space-y-3">
+            <div className="max-w-sm space-y-4">
               <h1 className="font-serif text-3xl text-[var(--navy)] sm:text-4xl">Share location</h1>
               <p className={locationError ? "leading-7 text-[var(--error-red)]" : "muted-copy leading-7"}>
                 {shareMessage}
               </p>
+              {!locationRequested && (
+                <Button className="mx-auto whitespace-nowrap" type="button" onClick={() => setLocationRequested(true)}>
+                  Share location
+                </Button>
+              )}
             </div>
           </div>
         )}
@@ -277,27 +271,40 @@ const ShareLocationPage: NextPage = () => {
                     : "text-sm font-semibold text-[var(--navy)]"
                 }
               >
-                {proofResult?.success ? "Done." : shareMessage}
+                {bottomMessage}
               </p>
-              {hasLocationPair && !proofResult?.success && (
+              {!derivedAccountReady ? (
                 <Button
                   className="self-start whitespace-nowrap sm:self-auto"
                   type="button"
-                  disabled={isFinishing}
-                  loading={isFinishing}
-                  onClick={onFinishSharing}
+                  disabled={derivingAccount}
+                  loading={derivingAccount}
+                  onClick={onStartPrivateSharing}
                 >
-                  Done
+                  Share privately
                 </Button>
+              ) : (
+                hasLocationPair &&
+                !proofResult?.success && (
+                  <Button
+                    className="self-start whitespace-nowrap sm:self-auto"
+                    type="button"
+                    disabled={isFinishing}
+                    loading={isFinishing}
+                    onClick={onFinishSharing}
+                  >
+                    Done
+                  </Button>
+                )
               )}
             </div>
           </div>
         )}
       </section>
 
-      {(finishError || proofResult?.error) && (
+      {(derivationError || finishError || proofResult?.error) && (
         <p className="mt-3 break-words text-sm text-[var(--error-red)]">
-          {finishErrorMessage((finishError || new Error(proofResult?.error)).message)}
+          {derivationError?.message || finishErrorMessage((finishError || new Error(proofResult?.error)).message)}
         </p>
       )}
     </>

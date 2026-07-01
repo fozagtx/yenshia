@@ -57,14 +57,14 @@ const InvitePage: NextPage = () => {
       <MetaHeader title="Yenshia | Share Location" />
       <section className="flex flex-col gap-y-4 items-center justify-center w-full py-10">
         <h1 className="w-full text-center font-serif text-3xl text-[var(--navy)] sm:text-4xl mb-2">
-          Start to share your location
+          Share your location
         </h1>
         <p className="muted-copy text-center max-w-md leading-7">
           You have been invited to share location. Start sharing or decline.
         </p>
         <div className="flex flex-col gap-y-4 items-center justify-center w-full mt-4">
           <Link href={`/chat/${inviterPublicKey}`}>
-            <Button className="min-w-[15rem]">Start</Button>
+            <Button className="min-w-[15rem]">Share location</Button>
           </Link>
           <Link href="/">
             <Button color="secondary" className="min-w-[15rem]">
