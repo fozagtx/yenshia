@@ -1,0 +1,14 @@
+{
+  "network": "testnet",
+  "deployedAt": "2026-07-01T13:42:53Z",
+  "contractId": "CCNO4DL455NC7LBP7BWGYKVSUNBVWJTPMTJ647664VEDRJX44QZFL3TO",
+  "wasmHash": "53563fb1dbe8e8193dacaad4c00fecf9609c5397ce9ff6f2d1473d191472205e",
+  "sourceIdentity": "stelakey-testnet-deployer",
+  "uploadTransactionHash": "eba246dd0eded4d75af0ed06fd44ed3ec57313378a93fdc29b29a03d215e5df7",
+  "deployTransactionHash": "7085a14af3cc0441fa06ad5e6fc83bfc5773921d825f863ce85a364aa31ee2ba",
+  "explorer": {
+    "uploadTransaction": "https://stellar.expert/explorer/testnet/tx/eba246dd0eded4d75af0ed06fd44ed3ec57313378a93fdc29b29a03d215e5df7",
+    "deployTransaction": "https://stellar.expert/explorer/testnet/tx/7085a14af3cc0441fa06ad5e6fc83bfc5773921d825f863ce85a364aa31ee2ba",
+    "contract": "https://lab.stellar.org/r/testnet/contract/CCNO4DL455NC7LBP7BWGYKVSUNBVWJTPMTJ647664VEDRJX44QZFL3TO"
+  }
+}

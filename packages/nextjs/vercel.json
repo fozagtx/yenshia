@@ -1,0 +1,7 @@
+{
+  "buildCommand": "cd ../.. && pnpm --filter @yenshia/nextjs build",
+  "devCommand": "cd ../.. && pnpm --filter @yenshia/nextjs dev",
+  "framework": "nextjs",
+  "installCommand": "cd ../.. && pnpm install --frozen-lockfile",
+  "outputDirectory": ".next"
+}

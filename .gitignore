@@ -1,0 +1,25 @@
+node_modules
+.next
+packages/**/.next
+
+# dependencies, package-manager state, eslint
+.eslintcache
+*.tsbuildinfo
+.vscode/**
+.DS_Store
+.env
+.env.*
+
+dist/
+target/
+contracts/**/target/
+circuits/**/target/
+circuits/**/Prover.toml
+circuits/**/proof
+circuits/**/proof_fields.json
+circuits/**/public_inputs
+circuits/**/public_inputs_fields.json
+circuits/**/vk
+circuits/**/vk_fields.json
+.vercel
+.serena

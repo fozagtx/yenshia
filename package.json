@@ -1,0 +1,28 @@
+{
+  "name": "yenshia",
+  "version": "0.0.1",
+  "private": true,
+  "workspaces": {
+    "packages": [
+      "packages/nextjs"
+    ]
+  },
+  "scripts": {
+    "start": "pnpm --filter @yenshia/nextjs dev",
+    "next:lint": "pnpm --filter @yenshia/nextjs lint",
+    "next:format": "pnpm --filter @yenshia/nextjs format",
+    "next:check-types": "pnpm --filter @yenshia/nextjs check-types",
+    "next:build": "pnpm --filter @yenshia/nextjs build",
+    "zk:compile": "bash scripts/zk/compile-noir.sh",
+    "zk:prove": "bash scripts/zk/prove-noir.sh",
+    "contract:build": "cd contracts/yenshia_ultrahonk_verifier && stellar contract build",
+    "contract:deploy": "bash scripts/zk/deploy-ultrahonk.sh",
+    "contract:verify-proof": "bash scripts/zk/invoke-ultrahonk.sh",
+    "test": "pnpm next:check-types",
+    "vercel": "pnpm --filter @yenshia/nextjs vercel"
+  },
+  "packageManager": "pnpm@10.14.0",
+  "devDependencies": {
+    "@types/react-dom": "^18.2.11"
+  }
+}
