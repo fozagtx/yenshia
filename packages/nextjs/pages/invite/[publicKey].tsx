@@ -67,7 +67,7 @@ const InvitePage: NextPage = () => {
     setRequestingLocation(true);
     navigator.geolocation.getCurrentPosition(
       () => {
-        void router.push(`/chat/${inviterPublicKey}?share=1`);
+        void router.push(`/share/${inviterPublicKey}?share=1`);
       },
       error => {
         setRequestingLocation(false);
