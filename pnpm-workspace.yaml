@@ -1,2 +1,10 @@
 packages:
   - "packages/nextjs"
+
+packageExtensions:
+  "@waku/enr@*":
+    dependencies:
+      uint8arrays: ^5.1.1
+  "@waku/proto@*":
+    dependencies:
+      uint8arrays: ^5.1.1
