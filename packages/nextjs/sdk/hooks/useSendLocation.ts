@@ -1,19 +1,22 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useSendMessage } from "./useSendMessage";
 import { useGeolocated } from "react-geolocated";
 import { generateEncryptionClient, useDerivedAccount } from "~~/sdk/crypto";
 import { useStellarWallet } from "~~/sdk/stellar-wallet";
 
 interface UseSendLocationParams {
-  publicKey?: `0x${string}`;
+  recipientPublicKey?: `0x${string}`;
+  sessionPublicKey?: `0x${string}`;
 }
 
-export const useSendLocation = ({ publicKey }: UseSendLocationParams) => {
+export const useSendLocation = ({ recipientPublicKey, sessionPublicKey }: UseSendLocationParams) => {
   const { address } = useStellarWallet();
   const { derivedAccount } = useDerivedAccount();
-  const canShareLocation = !!address && !!publicKey && !!derivedAccount;
+  const canShareLocation = !!address && !!recipientPublicKey && !!sessionPublicKey && !!derivedAccount;
+  const [sendError, setSendError] = useState<Error | null>(null);
+  const [lastSentAt, setLastSentAt] = useState<number | null>(null);
 
-  const { send } = useSendMessage();
+  const { relayError, relayReady, relayStatus, send } = useSendMessage();
   const { coords, isGeolocationAvailable, isGeolocationEnabled } = useGeolocated({
     positionOptions: {
       enableHighAccuracy: true,
@@ -24,34 +27,58 @@ export const useSendLocation = ({ publicKey }: UseSendLocationParams) => {
   });
 
   useEffect(() => {
-    if (!address || !coords || !derivedAccount || !publicKey) return;
+    if (!address || !coords || !derivedAccount || !recipientPublicKey || !sessionPublicKey) return;
+
+    let stopped = false;
 
     const callback = async () => {
       const message = {
         latitude: coords.latitude,
         longitude: coords.longitude,
+        recipientPublicKey,
         senderPublicKey: derivedAccount.publicKey,
         senderAddress: address,
+        sentAt: Date.now(),
+        sessionPublicKey,
       };
 
-      const encryptionClient = generateEncryptionClient(publicKey);
+      const encryptionClient = generateEncryptionClient(recipientPublicKey);
 
       const encryptedMessage = await encryptionClient.encryptMessage(JSON.stringify(message));
       const stringifiedEncryptedMessage = JSON.stringify(encryptedMessage);
 
-      send({ message: stringifiedEncryptedMessage, sender: address });
+      if (!stopped) {
+        await send({ message: stringifiedEncryptedMessage, sender: address });
+        setSendError(null);
+        setLastSentAt(Date.now());
+      }
     };
 
-    const intervalId = setInterval(callback, 1000);
+    const publishLocation = () => {
+      void callback().catch(error => {
+        setSendError(error instanceof Error ? error : new Error("Location could not be sent."));
+      });
+    };
+
+    publishLocation();
+    const intervalId = setInterval(() => {
+      publishLocation();
+    }, 3000);
 
     return () => {
+      stopped = true;
       clearInterval(intervalId);
     };
-  }, [send, coords, address, publicKey, derivedAccount]);
+  }, [send, coords, address, recipientPublicKey, sessionPublicKey, derivedAccount]);
 
   return {
     coords,
     isGeolocationAvailable,
     isGeolocationEnabled,
+    lastSentAt,
+    relayError,
+    relayReady,
+    relayStatus,
+    sendError,
   };
 };

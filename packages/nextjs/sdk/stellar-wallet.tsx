@@ -35,11 +35,12 @@ const loadFreighterRuntime = async () => {
   return freighterRuntimePromise;
 };
 
-const freighterErrorMessage = (response: FreighterResponse, fallback: string) => response.error?.message || fallback;
+const freighterErrorMessage = (response: FreighterResponse, defaultMessage: string) =>
+  response.error?.message || defaultMessage;
 
-const requireFreighterSuccess = (response: FreighterResponse, fallback: string) => {
+const requireFreighterSuccess = (response: FreighterResponse, defaultMessage: string) => {
   if (response.error) {
-    throw new Error(freighterErrorMessage(response, fallback));
+    throw new Error(freighterErrorMessage(response, defaultMessage));
   }
 };
 

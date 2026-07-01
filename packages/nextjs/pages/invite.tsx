@@ -73,7 +73,7 @@ const InvitePage: NextPage = () => {
           className="proof-illustration mx-auto w-full max-w-[22rem] md:max-w-[28rem]"
         />
 
-        {inviteLink ? (
+        {derivedAccount ? (
           <div className="flex flex-col items-center gap-5 text-center">
             <div className="space-y-2">
               <p className="status-pill mx-auto">
@@ -98,6 +98,10 @@ const InvitePage: NextPage = () => {
             >
               Copy link
             </CopyButton>
+
+            <Link href={`/chat/${derivedAccount.publicKey}`} className="inline-flex">
+              <Button color="secondary">Open my session</Button>
+            </Link>
           </div>
         ) : (
           <div className="flex flex-col justify-center gap-4 text-center md:text-left">

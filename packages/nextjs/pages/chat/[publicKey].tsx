@@ -38,18 +38,45 @@ const LocationSessionPage: NextPage = () => {
 
   const hasMounted = useHasMounted();
   const { address, signTransaction } = useStellarWallet();
-  const { derivationError, derivedAccountReady, deriveAccount, derivingAccount } = useDerivedAccount();
+  const { derivationError, derivedAccount, derivedAccountReady, deriveAccount, derivingAccount } = useDerivedAccount();
   const [unsignedTransactionXdr, setUnsignedTransactionXdr] = useState("");
   const [signedTransactionXdr, setSignedTransactionXdr] = useState("");
   const [proofResult, setProofResult] = useState<SubmitProofApiResponse | null>(null);
   const [signingError, setSigningError] = useState<string | null>(null);
   const [isSigning, setIsSigning] = useState(false);
   const sessionReady = !!address && !!publicKey && derivedAccountReady;
+  const isSessionOwner =
+    !!publicKey && !!derivedAccount && publicKey.toLowerCase() === derivedAccount.publicKey.toLowerCase();
 
-  const { coords, isGeolocationAvailable, isGeolocationEnabled } = useSendLocation({
-    publicKey: sessionReady ? publicKey : undefined,
+  const {
+    coords: otherCoords,
+    location: peerLocation,
+    receiveError,
+    relayError: receiveRelayError,
+    relayReady: receiveRelayReady,
+    relayStatus: receiveRelayStatus,
+  } = useReceiveLocation({
+    enabled: sessionReady,
+    expectedSenderPublicKey: isSessionOwner ? undefined : publicKey,
+    sessionPublicKey: sessionReady ? publicKey : undefined,
   });
-  const { coords: otherCoords } = useReceiveLocation({ enabled: sessionReady });
+  const recipientPublicKey = sessionReady ? (isSessionOwner ? peerLocation?.senderPublicKey : publicKey) : undefined;
+  const canSendToPeer =
+    !!recipientPublicKey &&
+    !!derivedAccount &&
+    recipientPublicKey.toLowerCase() !== derivedAccount.publicKey.toLowerCase();
+  const {
+    coords,
+    isGeolocationAvailable,
+    isGeolocationEnabled,
+    relayError: sendRelayError,
+    relayReady: sendRelayReady,
+    relayStatus: sendRelayStatus,
+    sendError,
+  } = useSendLocation({
+    recipientPublicKey: canSendToPeer ? recipientPublicKey : undefined,
+    sessionPublicKey: sessionReady ? publicKey : undefined,
+  });
 
   const {
     mutateAsync: submitProof,
@@ -173,14 +200,34 @@ const LocationSessionPage: NextPage = () => {
     );
   }
 
-  const hasLocationPair = !!coords && !!otherCoords;
-  const locationStatus = !isGeolocationAvailable
+  const relayError = sendRelayError || receiveRelayError;
+  const relayStatus =
+    receiveRelayStatus === "loading" || sendRelayStatus === "loading" ? "loading" : receiveRelayStatus;
+  const sessionError = sendError || receiveError || relayError;
+  const waitingForPeer = sessionReady && isSessionOwner && !peerLocation;
+  const hasLocationPair = !!coords && !!otherCoords && canSendToPeer;
+  const locationStatus = sessionError
+    ? sessionError.message
+    : relayStatus === "loading" || !receiveRelayReady || (canSendToPeer && !sendRelayReady)
+    ? "Connecting to the real location relay."
+    : waitingForPeer
+    ? "Waiting for the other phone to open your link."
+    : !canSendToPeer
+    ? "Waiting for the other phone."
+    : !isGeolocationAvailable
     ? "Geolocation is not available in this browser."
     : !isGeolocationEnabled
     ? "Enable geolocation to share a real location."
     : hasLocationPair
     ? "Both locations are ready."
     : "Waiting for both phones.";
+  const locationPanelTitle = sessionError
+    ? "Location sharing is blocked"
+    : waitingForPeer
+    ? "Waiting for the other phone"
+    : !canSendToPeer
+    ? "Waiting for a real peer"
+    : "Location access needed";
 
   return (
     <>
@@ -207,8 +254,10 @@ const LocationSessionPage: NextPage = () => {
           ) : (
             <div className="grid min-h-[18rem] items-center gap-5 md:grid-cols-[1fr_0.9fr]">
               <div className="space-y-4 text-center md:text-left">
-                <h2 className="font-serif text-2xl text-[var(--navy)] sm:text-3xl">Location access needed</h2>
-                <p className="muted-copy leading-7">{locationStatus}</p>
+                <h2 className="font-serif text-2xl text-[var(--navy)] sm:text-3xl">{locationPanelTitle}</h2>
+                <p className={sessionError ? "leading-7 text-[var(--error-red)]" : "muted-copy leading-7"}>
+                  {locationStatus}
+                </p>
               </div>
               <Image
                 src="/illustrations/yenshia-human-location-strip-transparent.png"

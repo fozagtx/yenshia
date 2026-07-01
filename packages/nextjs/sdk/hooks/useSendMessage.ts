@@ -3,10 +3,12 @@ import { useNode } from "./useNode";
 import { createEncoder } from "@waku/sdk";
 
 export const useSendMessage = () => {
-  const { data: node } = useNode();
+  const { data: node, error, status } = useNode();
 
   const send = async ({ message, sender }: { message: string; sender: string }) => {
-    if (!node) return;
+    if (!node) {
+      throw new Error("Yenshia is not connected to the real location relay yet.");
+    }
 
     // Create a message encoder
     const encoder = createEncoder({ contentTopic: CONTENT_TOPIC });
@@ -28,5 +30,8 @@ export const useSendMessage = () => {
 
   return {
     send,
+    relayError: error instanceof Error ? error : null,
+    relayStatus: status,
+    relayReady: !!node,
   };
 };

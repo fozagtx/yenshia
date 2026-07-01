@@ -2,50 +2,126 @@ import { useEffect, useState } from "react";
 import { CONTENT_TOPIC, locationMessage } from "../constants";
 import { useNode } from "./useNode";
 import { DecodedMessage, createDecoder } from "@waku/sdk";
-import { useDerivedAccountEncryption } from "~~/sdk/crypto";
+import { useDerivedAccount, useDerivedAccountEncryption } from "~~/sdk/crypto";
 
-export const useReceiveLocation = ({ enabled = true }: { enabled?: boolean } = {}) => {
-  const { data: node } = useNode();
+type HexPublicKey = `0x${string}`;
+
+type ReceivedLocation = {
+  latitude: number;
+  longitude: number;
+  recipientPublicKey: HexPublicKey;
+  senderAddress: string;
+  senderPublicKey: HexPublicKey;
+  sentAt: number;
+  sessionPublicKey: HexPublicKey;
+};
+
+const isHexPublicKey = (value: unknown): value is HexPublicKey =>
+  typeof value === "string" && /^0x04[0-9a-fA-F]{128}$/.test(value);
+
+const parseLocationPayload = (payload: unknown): ReceivedLocation | null => {
+  if (!payload || typeof payload !== "object") return null;
+
+  const candidate = payload as Record<string, unknown>;
+  if (
+    typeof candidate.latitude !== "number" ||
+    typeof candidate.longitude !== "number" ||
+    typeof candidate.senderAddress !== "string" ||
+    typeof candidate.sentAt !== "number" ||
+    !isHexPublicKey(candidate.recipientPublicKey) ||
+    !isHexPublicKey(candidate.senderPublicKey) ||
+    !isHexPublicKey(candidate.sessionPublicKey)
+  ) {
+    return null;
+  }
+
+  if (candidate.latitude < -90 || candidate.latitude > 90 || candidate.longitude < -180 || candidate.longitude > 180) {
+    return null;
+  }
+
+  return candidate as ReceivedLocation;
+};
+
+export const useReceiveLocation = ({
+  enabled = true,
+  expectedSenderPublicKey,
+  sessionPublicKey,
+}: {
+  enabled?: boolean;
+  expectedSenderPublicKey?: HexPublicKey;
+  sessionPublicKey?: HexPublicKey;
+} = {}) => {
+  const { data: node, error: relayError, status: relayStatus } = useNode();
+  const { derivedAccount } = useDerivedAccount();
   const { decryptMessage, derivedAccountReady } = useDerivedAccountEncryption();
 
-  const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [location, setLocation] = useState<ReceivedLocation | null>(null);
+  const [receiveError, setReceiveError] = useState<Error | null>(null);
 
   useEffect(() => {
-    if (!enabled || !node || !derivedAccountReady) return;
+    if (!enabled || !node || !derivedAccountReady || !derivedAccount || !sessionPublicKey) return;
 
     const callback = async (wakuMessage: DecodedMessage) => {
-      // Check if there is a payload on the message
       if (!wakuMessage.payload) return;
 
-      const decodedMessage = locationMessage.decode(wakuMessage.payload).toJSON();
+      try {
+        const decodedMessage = locationMessage.decode(wakuMessage.payload).toJSON();
+        const decryptedMessageField = await decryptMessage(JSON.parse(decodedMessage.message));
+        const parsedPayload = parseLocationPayload(JSON.parse(decryptedMessageField));
 
-      const decryptedMessageField = await decryptMessage(JSON.parse(decodedMessage.message));
-      const parsedDecryptedMessageField = JSON.parse(decryptedMessageField);
+        if (!parsedPayload) {
+          setReceiveError(new Error("Received location data was not valid."));
+          return;
+        }
 
-      setCoords({
-        latitude: parsedDecryptedMessageField.latitude,
-        longitude: parsedDecryptedMessageField.longitude,
-      });
+        if (parsedPayload.recipientPublicKey.toLowerCase() !== derivedAccount.publicKey.toLowerCase()) return;
+        if (parsedPayload.sessionPublicKey.toLowerCase() !== sessionPublicKey.toLowerCase()) return;
+        if (
+          expectedSenderPublicKey &&
+          parsedPayload.senderPublicKey.toLowerCase() !== expectedSenderPublicKey.toLowerCase()
+        ) {
+          return;
+        }
+        if (parsedPayload.senderPublicKey.toLowerCase() === derivedAccount.publicKey.toLowerCase()) return;
+
+        setReceiveError(null);
+        setLocation(parsedPayload);
+      } catch {
+        // Messages for other Yenshia sessions share the same public Waku topic and will not decrypt here.
+      }
     };
 
-    let unsubscribe: any;
+    let unsubscribe: (() => void) | undefined;
+    let cancelled = false;
 
     const subscribe = async () => {
-      // Create a message and decoder
       const decoder = createDecoder(CONTENT_TOPIC);
-
-      // Subscribe to content topics and display new messages
-      await node.filter.subscribe([decoder], callback);
+      const nextUnsubscribe = await node.filter.subscribe([decoder], callback);
+      if (cancelled && typeof nextUnsubscribe === "function") {
+        nextUnsubscribe();
+        return;
+      }
+      if (typeof nextUnsubscribe === "function") {
+        unsubscribe = nextUnsubscribe;
+      }
     };
 
-    subscribe();
+    void subscribe().catch(error => {
+      setReceiveError(error instanceof Error ? error : new Error("Could not listen for shared location."));
+    });
 
     return () => {
+      cancelled = true;
       unsubscribe?.();
     };
-  }, [enabled, node, decryptMessage, derivedAccountReady]);
+  }, [enabled, node, decryptMessage, derivedAccountReady, derivedAccount, expectedSenderPublicKey, sessionPublicKey]);
 
   return {
-    coords,
+    coords: location ? { latitude: location.latitude, longitude: location.longitude } : null,
+    location,
+    receiveError,
+    relayError: relayError instanceof Error ? relayError : null,
+    relayReady: !!node,
+    relayStatus,
   };
 };
