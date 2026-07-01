@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useRouter } from "next/router";
@@ -16,7 +16,17 @@ const Map = dynamic(() => import("../../components/my-map/my-map"), {
   ssr: false,
 });
 
-const TESTNET_NETWORK_PASSPHRASE = "Test SDF Network ; September 2015";
+type PrepareProofApiResponse =
+  | {
+      success: true;
+      contractId: string;
+      networkPassphrase: string;
+      unsignedTransactionXdr: string;
+    }
+  | {
+      success: false;
+      error: string;
+    };
 
 type SubmitProofApiResponse = {
   success: boolean;
@@ -39,11 +49,7 @@ const LocationSessionPage: NextPage = () => {
   const hasMounted = useHasMounted();
   const { address, signTransaction } = useStellarWallet();
   const { derivationError, derivedAccount, derivedAccountReady, deriveAccount, derivingAccount } = useDerivedAccount();
-  const [unsignedTransactionXdr, setUnsignedTransactionXdr] = useState("");
-  const [signedTransactionXdr, setSignedTransactionXdr] = useState("");
   const [proofResult, setProofResult] = useState<SubmitProofApiResponse | null>(null);
-  const [signingError, setSigningError] = useState<string | null>(null);
-  const [isSigning, setIsSigning] = useState(false);
   const sessionReady = !!address && !!publicKey && derivedAccountReady;
   const isSessionOwner =
     !!publicKey && !!derivedAccount && publicKey.toLowerCase() === derivedAccount.publicKey.toLowerCase();
@@ -79,18 +85,38 @@ const LocationSessionPage: NextPage = () => {
   });
 
   const {
-    mutateAsync: submitProof,
-    error: submitProofError,
-    isLoading,
+    mutateAsync: verifyProof,
+    error: verificationError,
+    isLoading: isVerifying,
   } = useMutation<SubmitProofApiResponse, Error, string>({
-    mutationFn: async xdr => {
+    mutationFn: async walletAddress => {
+      const prepareResponse = await fetch("/api/stellar/prepare-proof", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          sourceAddress: walletAddress,
+        }),
+      });
+
+      const prepared = (await prepareResponse.json()) as PrepareProofApiResponse;
+      if (!prepareResponse.ok) {
+        throw new Error(prepared.success ? "Stellar proof transaction could not be prepared." : prepared.error);
+      }
+
+      if (!prepared.success) {
+        throw new Error(prepared.error || "Stellar proof transaction could not be prepared.");
+      }
+
+      const signedTransactionXdr = await signTransaction(prepared.unsignedTransactionXdr, prepared.networkPassphrase);
       const response = await fetch("/api/stellar/submit-proof", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          signedTransactionXdr: xdr,
+          signedTransactionXdr,
         }),
       });
 
@@ -103,29 +129,18 @@ const LocationSessionPage: NextPage = () => {
     },
   });
 
-  const onSubmitProof = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const onVerifyProof = async () => {
     setProofResult(null);
 
     try {
-      const result = await submitProof(signedTransactionXdr.trim());
+      if (!address) {
+        throw new Error("Connect a Stellar wallet before verification.");
+      }
+
+      const result = await verifyProof(address);
       setProofResult(result);
     } catch {
       setProofResult(null);
-    }
-  };
-
-  const onSignTransaction = async () => {
-    setSigningError(null);
-    setIsSigning(true);
-
-    try {
-      const signedXdr = await signTransaction(unsignedTransactionXdr.trim(), TESTNET_NETWORK_PASSPHRASE);
-      setSignedTransactionXdr(signedXdr);
-    } catch (error) {
-      setSigningError(error instanceof Error ? error.message : "Stellar wallet signing failed.");
-    } finally {
-      setIsSigning(false);
     }
   };
 
@@ -270,78 +285,62 @@ const LocationSessionPage: NextPage = () => {
           )}
         </section>
 
-        <section className="soft-panel flex w-full flex-col gap-4 p-5 md:p-6">
+        <section className="soft-panel flex w-full flex-col gap-5 p-5 md:p-6" aria-busy={isVerifying}>
           <div className="space-y-2">
-            <h2 className="font-serif text-2xl text-[var(--navy)] sm:text-3xl">Sign Stellar transaction</h2>
-            <p className="muted-copy leading-7">
-              Paste the unsigned Stellar transaction, then sign it with your wallet.
+            <h2 className="font-serif text-2xl text-[var(--navy)] sm:text-3xl">Verify on Stellar</h2>
+            <p className="muted-copy max-w-3xl leading-7">
+              When both phones are sharing real location, Yenshia prepares the verifier call, asks your wallet to sign,
+              and sends it to Stellar.
             </p>
           </div>
 
-          <label className="text-sm font-semibold text-[var(--navy)]" htmlFor="unsigned-transaction-xdr">
-            Unsigned transaction
-          </label>
-          <textarea
-            id="unsigned-transaction-xdr"
-            className="textarea min-h-[8rem] w-full font-mono text-xs"
-            value={unsignedTransactionXdr}
-            onChange={event => setUnsignedTransactionXdr(event.target.value)}
-            placeholder="Paste unsigned Stellar transaction"
-          />
+          <div className="grid gap-3 md:grid-cols-3">
+            <div className="soft-card space-y-1 p-4">
+              <p className="text-sm font-semibold text-[var(--navy)]">Locations</p>
+              <p className="text-sm text-[var(--neutral-muted)]">{hasLocationPair ? "Ready" : locationStatus}</p>
+            </div>
+            <div className="soft-card space-y-1 p-4">
+              <p className="text-sm font-semibold text-[var(--navy)]">Wallet</p>
+              <p className="text-sm text-[var(--neutral-muted)]">
+                {isVerifying ? "Confirm in Freighter" : proofResult?.hash ? "Signed" : "Signature required"}
+              </p>
+            </div>
+            <div className="soft-card space-y-1 p-4">
+              <p className="text-sm font-semibold text-[var(--navy)]">Stellar</p>
+              <p className="text-sm text-[var(--neutral-muted)]">
+                {proofResult?.success ? "Verified" : proofResult ? "Blocked" : "Not submitted"}
+              </p>
+            </div>
+          </div>
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm text-[var(--neutral-muted)]">Only a signed Stellar transaction can be sent.</p>
+            <p className="text-sm text-[var(--neutral-muted)]">
+              {hasLocationPair ? "Your wallet will show the Stellar transaction before signing." : locationStatus}
+            </p>
             <Button
               className="self-start whitespace-nowrap sm:self-auto"
               type="button"
-              disabled={!hasLocationPair || !address || isSigning || unsignedTransactionXdr.trim().length === 0}
-              loading={isSigning}
-              onClick={onSignTransaction}
+              disabled={!hasLocationPair || isVerifying}
+              loading={isVerifying}
+              onClick={onVerifyProof}
             >
-              Sign with Stellar
+              Verify on Stellar
             </Button>
           </div>
 
-          {signingError && <p className="break-words text-sm text-[var(--error-red)]">{signingError}</p>}
-        </section>
-
-        <form className="soft-panel flex w-full flex-col gap-4 p-5 md:p-6" onSubmit={onSubmitProof}>
-          <div className="space-y-2">
-            <h2 className="font-serif text-2xl text-[var(--navy)] sm:text-3xl">Send signed transaction</h2>
-            <p className="muted-copy leading-7">
-              Paste the signed Stellar transaction for the real on-chain call. Empty or unsigned data stays blocked.
-            </p>
-          </div>
-
-          <label className="text-sm font-semibold text-[var(--navy)]" htmlFor="signed-transaction-xdr">
-            Signed transaction
-          </label>
-          <textarea
-            id="signed-transaction-xdr"
-            className="textarea min-h-[11rem] w-full font-mono text-xs"
-            value={signedTransactionXdr}
-            onChange={event => setSignedTransactionXdr(event.target.value)}
-            placeholder="Paste signed Stellar transaction"
-          />
-
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm text-[var(--neutral-muted)]">{locationStatus}</p>
-            <Button
-              className="self-start whitespace-nowrap sm:self-auto"
-              type="submit"
-              disabled={!hasLocationPair || isLoading || signedTransactionXdr.trim().length === 0}
-              loading={isLoading}
-            >
-              Send transaction
-            </Button>
-          </div>
-
-          {submitProofError && (
-            <p className="break-words text-sm text-[var(--error-red)]">{submitProofError.message}</p>
+          {verificationError && (
+            <p className="break-words text-sm text-[var(--error-red)]">{verificationError.message}</p>
           )}
 
           {proofResult && (
             <div className="soft-card space-y-2 break-words p-4 text-sm">
+              <p
+                className={
+                  proofResult.success ? "font-semibold text-[var(--navy)]" : "font-semibold text-[var(--error-red)]"
+                }
+              >
+                {proofResult.success ? "Verified on Stellar" : "Stellar verification blocked"}
+              </p>
               {proofResult.hash && (
                 <p>
                   <span className="font-semibold">Hash:</span> {proofResult.hash}
@@ -360,7 +359,7 @@ const LocationSessionPage: NextPage = () => {
               {proofResult.error && <p className="text-[var(--error-red)]">{proofResult.error}</p>}
             </div>
           )}
-        </form>
+        </section>
       </div>
     </>
   );

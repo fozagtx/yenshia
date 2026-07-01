@@ -11,7 +11,8 @@ verification key and verifies proofs on Stellar.
 
 - Encrypted invitation links for private location sessions.
 - Live geolocation sharing through the existing Waku message path.
-- `/api/stellar/submit-proof` for submitting signed Stellar transaction XDR.
+- `/api/stellar/prepare-proof` for preparing the real Soroban verifier call.
+- `/api/stellar/submit-proof` for submitting the wallet-signed verifier transaction.
 - RPC polling for the actual Stellar transaction result.
 - Noir circuit in `circuits/yenshia_location`.
 - Soroban UltraHonk verifier in `contracts/yenshia_ultrahonk_verifier`.
@@ -24,6 +25,9 @@ Set these in `packages/nextjs/.env.local` or your deployment environment:
 ```bash
 STELLAR_RPC_URL=
 STELLAR_NETWORK_PASSPHRASE=
+YENSHIA_VERIFIER_CONTRACT_ID=
+YENSHIA_PUBLIC_INPUTS_BASE64=
+YENSHIA_PROOF_BYTES_BASE64=
 ```
 
 Optional:
@@ -33,9 +37,10 @@ STELLAR_SUBMIT_POLL_ATTEMPTS=
 STELLAR_SUBMIT_POLL_INTERVAL_MS=
 ```
 
-The signed transaction XDR must invoke the deployed `verify_location_proof`
-contract method with real `public_inputs` and `proof` artifacts from the Noir
-prover.
+`YENSHIA_PUBLIC_INPUTS_BASE64` and `YENSHIA_PROOF_BYTES_BASE64` must come from a
+real Noir prover run for the location circuit. If those artifacts are missing,
+the app blocks the Stellar verification flow instead of creating substitute
+proof data.
 
 ## Testnet Deployment
 
