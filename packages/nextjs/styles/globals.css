@@ -255,6 +255,70 @@ p {
   }
 }
 
+.yenshia-map-avatar-icon {
+  border: 0 !important;
+  background: transparent !important;
+}
+
+.map-avatar-marker {
+  position: relative;
+  display: inline-flex;
+  max-width: 10rem;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid rgba(0, 34, 89, 0.14);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 10px 24px rgba(0, 34, 89, 0.18);
+  color: var(--navy);
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0.25rem 0.55rem 0.25rem 0.25rem;
+  white-space: nowrap;
+}
+
+.map-avatar-marker::after {
+  position: absolute;
+  bottom: -0.4rem;
+  left: 1.15rem;
+  width: 0.75rem;
+  height: 0.75rem;
+  border-right: 1px solid rgba(0, 34, 89, 0.14);
+  border-bottom: 1px solid rgba(0, 34, 89, 0.14);
+  background: rgba(255, 255, 255, 0.96);
+  content: "";
+  transform: rotate(45deg) !important;
+}
+
+.map-avatar-initials {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  width: 1.9rem;
+  height: 1.9rem;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--blue-primary);
+  color: white;
+  font-size: 0.75rem;
+}
+
+.map-avatar-marker--peer .map-avatar-initials {
+  background: var(--success-green);
+  color: var(--navy);
+}
+
+.map-avatar-name {
+  position: relative;
+  z-index: 1;
+  display: block;
+  max-width: 6.2rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 @media (min-width: 640px) {
   .landing-connect button {
     width: auto;

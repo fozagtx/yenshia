@@ -7,6 +7,7 @@ import { MetaHeader } from "~~/components/MetaHeader";
 import { Button } from "~~/components/ui/Button";
 import { useHasMounted } from "~~/hooks/useHasMounted";
 import { useDerivedAccount } from "~~/sdk/crypto";
+import { cleanDisplayName } from "~~/sdk/display-name";
 import { useReceiveLocation } from "~~/sdk/hooks/useReceiveLocation";
 import { useSendLocation } from "~~/sdk/hooks/useSendLocation";
 import { useStellarWallet } from "~~/sdk/stellar-wallet";
@@ -89,6 +90,8 @@ const ShareLocationPage: NextPage = () => {
   const [locationRequested, setLocationRequested] = useState(false);
   const joinFromInvite = router.query.join === "1" || router.query.share === "1";
   const startFromInvite = router.query.start === "1";
+  const currentDisplayName = cleanDisplayName(router.query.name) || "You";
+  const inviteDisplayName = cleanDisplayName(router.query.inviterName);
   const [proofResult, setProofResult] = useState<SubmitProofApiResponse | null>(null);
   const sharePageReady = !!address && !!publicKey && !!participantId && !participantIdentityError;
   const privateSharingReady = sharePageReady && derivedAccountReady;
@@ -132,6 +135,7 @@ const ShareLocationPage: NextPage = () => {
     relayStatus: sendRelayStatus,
     sendError,
   } = useSendLocation({
+    displayName: currentDisplayName,
     enabled: locationRequested,
     linkPublicKey: publicKey,
     participantId: participantId ?? undefined,
@@ -295,6 +299,7 @@ const ShareLocationPage: NextPage = () => {
   const hasPeerLocation = !!otherCoords && canSendToPeer;
   const hasLocationPair = hasOwnLocation && hasPeerLocation;
   const hasPublishedLocation = !!lastSentAt && canSendToPeer;
+  const peerDisplayName = cleanDisplayName(peerLocation?.displayName) || inviteDisplayName || "Other person";
   const mapPosition2 = hasPeerLocation
     ? ([otherCoords.latitude, otherCoords.longitude] as [number, number])
     : undefined;
@@ -349,7 +354,12 @@ const ShareLocationPage: NextPage = () => {
 
       <section className="relative min-h-[21rem] overflow-hidden rounded-2xl bg-[var(--blue-pale)] shadow-[var(--shadow-card)]">
         {hasOwnLocation ? (
-          <Map position1={[coords.latitude, coords.longitude]} position2={mapPosition2} />
+          <Map
+            position1={[coords.latitude, coords.longitude]}
+            position2={mapPosition2}
+            person1Name={currentDisplayName}
+            person2Name={hasPeerLocation ? peerDisplayName : undefined}
+          />
         ) : (
           <div className="grid min-h-[21rem] place-items-center px-4 pb-24 pt-6 text-center sm:min-h-[24rem]">
             <div className="max-w-sm space-y-3">
@@ -374,7 +384,7 @@ const ShareLocationPage: NextPage = () => {
               <p className="text-sm font-semibold">Live location</p>
               <div className="mt-2 grid gap-2 text-sm">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-[var(--neutral-muted)]">Your location</span>
+                  <span className="text-[var(--neutral-muted)]">{currentDisplayName}</span>
                   <span className="font-semibold">On map</span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
@@ -384,7 +394,7 @@ const ShareLocationPage: NextPage = () => {
                   </span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-[var(--neutral-muted)]">Other person</span>
+                  <span className="text-[var(--neutral-muted)]">{peerDisplayName}</span>
                   <span className="font-semibold">{peerStatusText}</span>
                 </div>
               </div>

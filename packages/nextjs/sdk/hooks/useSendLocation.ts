@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { useSendMessage } from "./useSendMessage";
 import { generateEncryptionClient, useDerivedAccount } from "~~/sdk/crypto";
+import { cleanDisplayName } from "~~/sdk/display-name";
 import { useStellarWallet } from "~~/sdk/stellar-wallet";
 
 interface UseSendLocationParams {
+  displayName?: string;
   enabled?: boolean;
   linkPublicKey?: `0x${string}`;
   participantId?: string;
@@ -11,6 +13,7 @@ interface UseSendLocationParams {
 }
 
 export const useSendLocation = ({
+  displayName,
   enabled = true,
   linkPublicKey,
   participantId,
@@ -88,6 +91,7 @@ export const useSendLocation = ({
 
     const callback = async () => {
       const message = {
+        displayName: cleanDisplayName(displayName),
         latitude: coords.latitude,
         longitude: coords.longitude,
         linkPublicKey,
@@ -134,6 +138,7 @@ export const useSendLocation = ({
     participantId,
     recipientPublicKey,
     derivedAccount,
+    displayName,
     relayReady,
   ]);
 

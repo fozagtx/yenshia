@@ -1,0 +1,44 @@
+# Yenshia Product Requirements
+
+## Users And Roles
+
+- Link creator: connects a real Stellar wallet, enters a display name, creates a private location invite, and may start sharing their own browser location.
+- Invited person: opens the invite link, connects a real Stellar wallet, enters a display name, and starts sharing their browser location.
+
+## Routes
+
+| Route                        | Purpose                                | Allowed                                      | Blocked                             | Data shown                                                       | Actions                                                  | Failure behavior                                             |
+| ---------------------------- | -------------------------------------- | -------------------------------------------- | ----------------------------------- | ---------------------------------------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------ |
+| `/`                          | Public landing and wallet entry        | Everyone                                     | None                                | Product copy, wallet button                                      | Connect wallet, continue pending invite                  | Wallet errors stay visible                                   |
+| `/invite`                    | Create a location invite               | Connected wallet                             | No wallet                           | Creator display name, QR, invite link                            | Create link, copy link, share own location               | Browser location and wallet errors block action              |
+| `/invite/[publicKey]`        | Accept invite                          | Valid invite key and connected wallet        | Invalid key, no wallet              | Inviter display name, invited person name field                  | Share location or decline                                | Invalid/no-wallet states block sharing                       |
+| `/share/[publicKey]`         | Live private location map              | Valid invite key and connected wallet        | Invalid key, no wallet              | Real browser location, received peer location, participant names | Start/continue sharing, finish proof path when available | Missing wallet/location/relay/proof data shows blocked state |
+| `/api/stellar/prepare-proof` | Prepare real Stellar verifier call     | Valid server proof config and source address | Missing proof/config/source address | Unsigned real transaction XDR                                    | Prepare transaction                                      | Returns error; no fake proof data                            |
+| `/api/stellar/submit-proof`  | Submit signed real Stellar transaction | Signed transaction XDR                       | Missing/invalid XDR                 | Stellar RPC result                                               | Submit transaction                                       | Returns error; no fake success                               |
+
+## UI Component System
+
+- Existing local components stay in use: `Button`, `CopyButton`, `QrCode`, `Layout`, `Header`, `MetaHeader`, and Leaflet map.
+- Map markers represent real known positions only: own browser geolocation and peer location received through the encrypted relay.
+- Participant names are user-entered display labels. They do not replace wallet identity or proof requirements.
+
+## Required Flows
+
+- Creator enters a name before creating the invite link.
+- Invite link includes the creator name for the invited person screen and QR payload.
+- Invited person sees "`Name` is inviting you to share location" and enters their own name before sharing.
+- Each encrypted location payload includes the sender's display name.
+- The map shows avatar-style markers for the current person and the received peer.
+
+## No Fake Demo Rules
+
+- No mock locations, generated wallets, fake proofs, fake transaction hashes, or simulated relay success.
+- If browser geolocation, wallet signature, relay send, real proof artifacts, signed transaction XDR, or Stellar RPC config is missing, the relevant flow stays blocked and reports the missing requirement.
+
+## Acceptance Criteria
+
+- QR/link copy includes the creator name.
+- Invite acceptance copy names the inviter.
+- Both map markers use avatar chips instead of generic marker SVGs.
+- Marker labels are based on user-entered names when available.
+- Typecheck and production build pass.

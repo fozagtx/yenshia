@@ -9,6 +9,7 @@ import { Button } from "~~/components/ui/Button";
 import { CopyButton } from "~~/components/ui/CopyButton";
 import { useHasMounted } from "~~/hooks/useHasMounted";
 import { useDerivedAccount } from "~~/sdk/crypto";
+import { DISPLAY_NAME_STORAGE_KEY, cleanDisplayName, displayNameQuery } from "~~/sdk/display-name";
 import { useStellarWallet } from "~~/sdk/stellar-wallet";
 
 const shortenAddress = (address: string) => `${address.slice(0, 5)}...${address.slice(-4)}`;
@@ -17,6 +18,7 @@ const InvitePage: NextPage = () => {
   const router = useRouter();
   const { address } = useStellarWallet();
   const { derivationError, derivedAccount, deriveAccount, derivingAccount } = useDerivedAccount();
+  const [displayName, setDisplayName] = useState("");
   const [locationError, setLocationError] = useState<string | null>(null);
   const [requestingLocation, setRequestingLocation] = useState(false);
 
@@ -27,6 +29,11 @@ const InvitePage: NextPage = () => {
       void router.replace("/");
     }
   }, [address, hasMounted, router]);
+
+  useEffect(() => {
+    if (!hasMounted) return;
+    setDisplayName(cleanDisplayName(window.localStorage.getItem(DISPLAY_NAME_STORAGE_KEY)));
+  }, [hasMounted]);
 
   if (!hasMounted) {
     return null;
@@ -44,13 +51,24 @@ const InvitePage: NextPage = () => {
     );
   }
 
-  const inviteLink = derivedAccount ? `${window.location.origin}/invite/${derivedAccount.publicKey}` : "";
+  const cleanName = cleanDisplayName(displayName);
+  const inviteLink = derivedAccount
+    ? `${window.location.origin}/invite/${derivedAccount.publicKey}?name=${displayNameQuery(cleanName)}`
+    : "";
   const onCreateInvite = () => {
+    if (!cleanName) {
+      setLocationError("Enter your name first.");
+      return;
+    }
+
+    window.localStorage.setItem(DISPLAY_NAME_STORAGE_KEY, cleanName);
+    setLocationError(null);
     void deriveAccount().catch(() => undefined);
   };
   const onShareLocation = () => {
-    if (!derivedAccount) return;
+    if (!derivedAccount || !cleanName) return;
 
+    window.localStorage.setItem(DISPLAY_NAME_STORAGE_KEY, cleanName);
     setLocationError(null);
 
     if (typeof navigator === "undefined" || !navigator.geolocation) {
@@ -61,7 +79,7 @@ const InvitePage: NextPage = () => {
     setRequestingLocation(true);
     navigator.geolocation.getCurrentPosition(
       () => {
-        void router.push(`/share/${derivedAccount.publicKey}?start=1`);
+        void router.push(`/share/${derivedAccount.publicKey}?start=1&name=${displayNameQuery(cleanName)}`);
       },
       error => {
         setRequestingLocation(false);
@@ -99,8 +117,20 @@ const InvitePage: NextPage = () => {
                 <span className="status-dot" />
                 Link ready
               </p>
-              <h1 className="font-serif text-3xl text-[var(--navy)] sm:text-4xl">Share this link</h1>
+              <h1 className="font-serif text-3xl text-[var(--navy)] sm:text-4xl">Share your invite</h1>
+              <p className="muted-copy leading-7">{cleanName} is inviting them to share location.</p>
             </div>
+
+            <label className="w-full max-w-sm text-left text-sm font-semibold text-[var(--navy)]">
+              Your name
+              <input
+                className="input mt-2 h-11 w-full px-3"
+                maxLength={32}
+                value={displayName}
+                onChange={event => setDisplayName(event.target.value)}
+                placeholder="Enter your name"
+              />
+            </label>
 
             <div className="rounded-2xl bg-white p-2 shadow-[var(--shadow-search)]">
               <QrCode address={inviteLink} />
@@ -116,11 +146,16 @@ const InvitePage: NextPage = () => {
               <CopyButton
                 text={inviteLink}
                 className="self-center"
+                disabled={!cleanName}
                 leftIcon={<ClipboardDocumentIcon className="h-5 w-5" />}
               >
                 Copy link
               </CopyButton>
-              <Button disabled={requestingLocation} loading={requestingLocation} onClick={onShareLocation}>
+              <Button
+                disabled={requestingLocation || !cleanName}
+                loading={requestingLocation}
+                onClick={onShareLocation}
+              >
                 Share location
               </Button>
             </div>
@@ -132,11 +167,22 @@ const InvitePage: NextPage = () => {
             <p className="muted-copy max-w-[28rem] leading-7">
               Make one private link for the person you want to share location with.
             </p>
+            <label className="w-full max-w-sm text-left text-sm font-semibold text-[var(--navy)]">
+              Your name
+              <input
+                className="input mt-2 h-11 w-full px-3"
+                maxLength={32}
+                value={displayName}
+                onChange={event => setDisplayName(event.target.value)}
+                placeholder="Enter your name"
+              />
+            </label>
+            {locationError && <p className="text-sm text-[var(--error-red)]">{locationError}</p>}
             {derivingAccount && <p className="muted-copy leading-7">Confirm in your wallet.</p>}
             {derivationError && <p className="text-sm text-[var(--error-red)]">{derivationError.message}</p>}
             <Button
               className="self-center whitespace-nowrap"
-              disabled={derivingAccount}
+              disabled={derivingAccount || !cleanName}
               loading={derivingAccount}
               onClick={onCreateInvite}
             >

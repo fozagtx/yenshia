@@ -3,10 +3,12 @@ import { CONTENT_TOPIC, locationMessage } from "../constants";
 import { useNode } from "./useNode";
 import { DecodedMessage, PageDirection, createDecoder } from "@waku/sdk";
 import { useDerivedAccount, useDerivedAccountEncryption } from "~~/sdk/crypto";
+import { cleanDisplayName } from "~~/sdk/display-name";
 
 type HexPublicKey = `0x${string}`;
 
 type ReceivedLocation = {
+  displayName: string;
   latitude: number;
   longitude: number;
   linkPublicKey: HexPublicKey;
@@ -42,7 +44,17 @@ const parseLocationPayload = (payload: unknown): ReceivedLocation | null => {
     return null;
   }
 
-  return candidate as ReceivedLocation;
+  return {
+    displayName: cleanDisplayName(candidate.displayName as string | undefined),
+    latitude: candidate.latitude,
+    longitude: candidate.longitude,
+    linkPublicKey: candidate.linkPublicKey,
+    participantId: candidate.participantId,
+    recipientPublicKey: candidate.recipientPublicKey,
+    senderAddress: candidate.senderAddress,
+    senderPublicKey: candidate.senderPublicKey,
+    sentAt: candidate.sentAt,
+  };
 };
 
 export const useReceiveLocation = ({

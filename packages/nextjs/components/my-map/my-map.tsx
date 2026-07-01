@@ -1,27 +1,51 @@
-import MarkerIcon from "./marker.svg";
 import L from "leaflet";
 import { AttributionControl, MapContainer, Marker, TileLayer } from "react-leaflet";
 
 interface MyMapProps {
+  person1Name?: string;
+  person2Name?: string;
   position1: [number, number];
   position2?: [number, number];
 }
 
-const otherPersonIcon = new L.Icon({
-  iconUrl: MarkerIcon.src,
-  iconRetinaUrl: MarkerIcon.src,
-  iconSize: new L.Point(30, 30),
-  className: "leaflet-div-icon rounded-full",
-});
+const escapeHtml = (value: string) =>
+  value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 
-const currentPersonIcon = new L.Icon({
-  iconUrl: MarkerIcon.src,
-  iconRetinaUrl: MarkerIcon.src,
-  iconSize: new L.Point(30, 30),
-  className: "leaflet-div-icon rounded-full",
-});
+const initialsForName = (name: string) => {
+  const parts = name
+    .replace(/[^a-zA-Z0-9 ]/g, "")
+    .split(" ")
+    .filter(Boolean);
 
-const MyMap = ({ position1, position2 }: MyMapProps) => {
+  if (parts.length === 0) return "Y";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+
+  return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+};
+
+const avatarIcon = (name: string, variant: "self" | "peer") => {
+  const safeName = escapeHtml(name);
+  const safeInitials = escapeHtml(initialsForName(name));
+
+  return L.divIcon({
+    className: "yenshia-map-avatar-icon",
+    html: `
+      <div class="map-avatar-marker map-avatar-marker--${variant}">
+        <span class="map-avatar-initials">${safeInitials}</span>
+        <span class="map-avatar-name">${safeName}</span>
+      </div>
+    `,
+    iconAnchor: [24, 48],
+    iconSize: [120, 54],
+  });
+};
+
+const MyMap = ({ person1Name = "You", person2Name = "Other person", position1, position2 }: MyMapProps) => {
   const isRealPosition = (position?: [number, number]): position is [number, number] =>
     !!position &&
     !(position[0] === 0 && position[1] === 0) &&
@@ -42,8 +66,8 @@ const MyMap = ({ position1, position2 }: MyMapProps) => {
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       <AttributionControl prefix={false} position="bottomright" />
-      <Marker position={position1} icon={currentPersonIcon} />
-      {isRealPosition(position2) && <Marker position={position2} icon={otherPersonIcon} />}
+      <Marker position={position1} icon={avatarIcon(person1Name, "self")} />
+      {isRealPosition(position2) && <Marker position={position2} icon={avatarIcon(person2Name, "peer")} />}
     </MapContainer>
   );
 };
