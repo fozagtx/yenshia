@@ -163,7 +163,7 @@ const HomePage: NextPage = () => {
 
       <footer className="flex flex-col items-start gap-3 border-t border-[rgba(189,215,255,0.3)] py-7 text-sm text-[var(--neutral-muted)] md:flex-row md:items-center md:justify-between">
         <p className="font-serif text-2xl text-[var(--navy)]">Yenshia</p>
-        <p>Private location sharing on Stellar.</p>
+        <p>Private location sharing for two people.</p>
       </footer>
     </>
   );

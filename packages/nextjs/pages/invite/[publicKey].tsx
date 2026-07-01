@@ -4,7 +4,6 @@ import { useRouter } from "next/router";
 import type { NextPage } from "next";
 import { MetaHeader } from "~~/components/MetaHeader";
 import { Button } from "~~/components/ui/Button";
-import { CopyButton } from "~~/components/ui/CopyButton";
 import { useHasMounted } from "~~/hooks/useHasMounted";
 import { useStellarWallet } from "~~/sdk/stellar-wallet";
 
@@ -22,11 +21,7 @@ const InvitePage: NextPage = () => {
   }, [address, hasMounted, isConnected, isValidInviteKey, router]);
 
   if (!hasMounted || !router.isReady || isConnecting) {
-    return (
-      <div className="my-14 flex justify-center text-sm font-semibold text-[var(--neutral-muted)]">
-        Preparing wallet state
-      </div>
-    );
+    return <div className="my-14 flex justify-center text-sm font-semibold text-[var(--neutral-muted)]">Loading…</div>;
   }
 
   if (!isValidInviteKey) {
@@ -34,7 +29,7 @@ const InvitePage: NextPage = () => {
       <>
         <MetaHeader title="Yenshia | Invalid Invite" />
         <section className="soft-panel mx-auto max-w-xl space-y-4 p-5 text-center sm:p-6">
-          <p className="status-pill mx-auto">Invite blocked</p>
+          <p className="status-pill mx-auto">Invalid link</p>
           <h1 className="font-serif text-3xl text-[var(--navy)] sm:text-4xl">This link is not valid.</h1>
           <p className="muted-copy leading-7">Ask for a fresh Yenshia link before sharing location.</p>
           <Link href="/" className="inline-flex">
@@ -50,38 +45,33 @@ const InvitePage: NextPage = () => {
       <>
         <MetaHeader title="Yenshia | Start" />
         <section className="soft-panel mx-auto max-w-xl space-y-4 p-5 text-center sm:p-6">
-          <p className="status-pill mx-auto">Start from home</p>
-          <h1 className="font-serif text-3xl text-[var(--navy)] sm:text-4xl">Open Yenshia home first.</h1>
+          <p className="status-pill mx-auto">Connect wallet</p>
+          <h1 className="font-serif text-3xl text-[var(--navy)] sm:text-4xl">Connect your wallet first.</h1>
         </section>
       </>
     );
   }
 
-  const inviteLink = `${window.location.origin}/invite/${inviterPublicKey}`;
-
   return (
     <>
-      <MetaHeader title="Yenshia | Join Location Session" />
-      <section className="soft-panel mx-auto flex max-w-xl flex-col items-center gap-5 p-5 text-center sm:p-6">
-        <p className="status-pill">
-          <span className="status-dot" />
-          Private link
+      <MetaHeader title="Yenshia | Share Location" />
+      <section className="flex flex-col gap-y-4 items-center justify-center w-full py-10">
+        <h1 className="w-full text-center font-serif text-3xl text-[var(--navy)] sm:text-4xl mb-2">
+          Start to share your location
+        </h1>
+        <p className="muted-copy text-center max-w-md leading-7">
+          You have been invited to a private location session. Share your live location or decline.
         </p>
-        <h1 className="font-serif text-3xl text-[var(--navy)] sm:text-4xl">Join location sharing</h1>
-        <p className="w-full break-words rounded-xl border border-[rgba(189,215,255,0.28)] bg-white/80 p-4 font-mono text-sm text-[var(--navy)]">
-          {inviteLink}
-        </p>
-        <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-          <CopyButton text={inviteLink} color="secondary">
-            Copy link
-          </CopyButton>
+        <div className="flex flex-col gap-y-4 items-center justify-center w-full mt-4">
+          <Link href={`/chat/${inviterPublicKey}`}>
+            <Button className="min-w-[15rem]">Start</Button>
+          </Link>
           <Link href="/">
-            <Button color="secondary">Decline</Button>
+            <Button color="secondary" className="min-w-[15rem]">
+              Decline
+            </Button>
           </Link>
         </div>
-        <Link href={`/chat/${inviterPublicKey}`}>
-          <Button>Join</Button>
-        </Link>
       </section>
     </>
   );

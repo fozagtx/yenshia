@@ -40,6 +40,27 @@ type SubmitProofApiResponse = {
   error?: string;
 };
 
+const privateCheckError = (message: string) => {
+  if (
+    message.includes("YENSHIA_") ||
+    message.includes("publicInputsBase64") ||
+    message.includes("proofBytesBase64") ||
+    message.includes("real Noir proof")
+  ) {
+    return "Private check is not ready yet because real proof data is missing.";
+  }
+
+  if (message.includes("STELLAR_") || message.includes("verifier contract")) {
+    return "Private check is not configured yet.";
+  }
+
+  if (message.includes("transaction") || message.includes("XDR") || message.includes("Soroban")) {
+    return "Private check could not be finished.";
+  }
+
+  return message;
+};
+
 const LocationSessionPage: NextPage = () => {
   const router = useRouter();
   const routePublicKey = router.query.publicKey?.toString();
@@ -102,11 +123,11 @@ const LocationSessionPage: NextPage = () => {
 
       const prepared = (await prepareResponse.json()) as PrepareProofApiResponse;
       if (!prepareResponse.ok) {
-        throw new Error(prepared.success ? "Stellar proof transaction could not be prepared." : prepared.error);
+        throw new Error(prepared.success ? "Private check could not be prepared." : prepared.error);
       }
 
       if (!prepared.success) {
-        throw new Error(prepared.error || "Stellar proof transaction could not be prepared.");
+        throw new Error(prepared.error || "Private check could not be prepared.");
       }
 
       const signedTransactionXdr = await signTransaction(prepared.unsignedTransactionXdr, prepared.networkPassphrase);
@@ -122,7 +143,7 @@ const LocationSessionPage: NextPage = () => {
 
       const payload = (await response.json()) as SubmitProofApiResponse;
       if (!response.ok) {
-        throw new Error(payload.error || "Stellar transaction submission failed.");
+        throw new Error(payload.error || "Private check could not be finished.");
       }
 
       return payload;
@@ -134,7 +155,7 @@ const LocationSessionPage: NextPage = () => {
 
     try {
       if (!address) {
-        throw new Error("Connect a Stellar wallet before verification.");
+        throw new Error("Connect your wallet before continuing.");
       }
 
       const result = await verifyProof(address);
@@ -287,35 +308,35 @@ const LocationSessionPage: NextPage = () => {
 
         <section className="soft-panel flex w-full flex-col gap-5 p-5 md:p-6" aria-busy={isVerifying}>
           <div className="space-y-2">
-            <h2 className="font-serif text-2xl text-[var(--navy)] sm:text-3xl">Verify on Stellar</h2>
+            <h2 className="font-serif text-2xl text-[var(--navy)] sm:text-3xl">Private check</h2>
             <p className="muted-copy max-w-3xl leading-7">
-              When both phones are sharing real location, Yenshia prepares the verifier call, asks your wallet to sign,
-              and sends it to Stellar.
+              When both phones are sharing location, Yenshia asks your wallet for one confirmation and finishes the
+              private session check.
             </p>
           </div>
 
           <div className="grid gap-3 md:grid-cols-3">
             <div className="soft-card space-y-1 p-4">
-              <p className="text-sm font-semibold text-[var(--navy)]">Locations</p>
+              <p className="text-sm font-semibold text-[var(--navy)]">Both phones</p>
               <p className="text-sm text-[var(--neutral-muted)]">{hasLocationPair ? "Ready" : locationStatus}</p>
             </div>
             <div className="soft-card space-y-1 p-4">
               <p className="text-sm font-semibold text-[var(--navy)]">Wallet</p>
               <p className="text-sm text-[var(--neutral-muted)]">
-                {isVerifying ? "Confirm in Freighter" : proofResult?.hash ? "Signed" : "Signature required"}
+                {isVerifying ? "Confirm in wallet" : proofResult?.hash ? "Confirmed" : "Needed"}
               </p>
             </div>
             <div className="soft-card space-y-1 p-4">
-              <p className="text-sm font-semibold text-[var(--navy)]">Stellar</p>
+              <p className="text-sm font-semibold text-[var(--navy)]">Session check</p>
               <p className="text-sm text-[var(--neutral-muted)]">
-                {proofResult?.success ? "Verified" : proofResult ? "Blocked" : "Not submitted"}
+                {proofResult?.success ? "Complete" : proofResult ? "Needs attention" : "Not started"}
               </p>
             </div>
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-[var(--neutral-muted)]">
-              {hasLocationPair ? "Your wallet will show the Stellar transaction before signing." : locationStatus}
+              {hasLocationPair ? "Your wallet will ask for one confirmation." : locationStatus}
             </p>
             <Button
               className="self-start whitespace-nowrap sm:self-auto"
@@ -324,12 +345,14 @@ const LocationSessionPage: NextPage = () => {
               loading={isVerifying}
               onClick={onVerifyProof}
             >
-              Verify on Stellar
+              Confirm private session
             </Button>
           </div>
 
           {verificationError && (
-            <p className="break-words text-sm text-[var(--error-red)]">{verificationError.message}</p>
+            <p className="break-words text-sm text-[var(--error-red)]">
+              {privateCheckError(verificationError.message)}
+            </p>
           )}
 
           {proofResult && (
@@ -339,24 +362,24 @@ const LocationSessionPage: NextPage = () => {
                   proofResult.success ? "font-semibold text-[var(--navy)]" : "font-semibold text-[var(--error-red)]"
                 }
               >
-                {proofResult.success ? "Verified on Stellar" : "Stellar verification blocked"}
+                {proofResult.success ? "Private check complete" : "Private check needs attention"}
               </p>
               {proofResult.hash && (
                 <p>
-                  <span className="font-semibold">Hash:</span> {proofResult.hash}
+                  <span className="font-semibold">Reference:</span> {proofResult.hash}
                 </p>
               )}
               {proofResult.submitStatus && (
                 <p>
-                  <span className="font-semibold">Submitted:</span> {proofResult.submitStatus}
+                  <span className="font-semibold">Status:</span> {proofResult.submitStatus}
                 </p>
               )}
               {proofResult.ledger && (
                 <p>
-                  <span className="font-semibold">Ledger:</span> {proofResult.ledger}
+                  <span className="font-semibold">Network record:</span> {proofResult.ledger}
                 </p>
               )}
-              {proofResult.error && <p className="text-[var(--error-red)]">{proofResult.error}</p>}
+              {proofResult.error && <p className="text-[var(--error-red)]">{privateCheckError(proofResult.error)}</p>}
             </div>
           )}
         </section>

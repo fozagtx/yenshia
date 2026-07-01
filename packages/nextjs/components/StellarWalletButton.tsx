@@ -66,7 +66,7 @@ export const StellarWalletButton = ({
               <div className="flex items-start justify-between gap-3">
                 <div className="space-y-1">
                   <h2 id="stellar-wallet-modal-title" className="font-serif text-3xl text-[var(--navy)]">
-                    Connect Stellar wallet
+                    Connect wallet
                   </h2>
                   <p className="text-sm leading-6 text-[var(--neutral-muted)]">Choose your wallet to continue.</p>
                 </div>
@@ -93,7 +93,7 @@ export const StellarWalletButton = ({
                   <span className="min-w-0 flex-1">
                     <span className="block text-sm font-semibold text-[var(--navy)]">Freighter</span>
                     <span className="block text-xs leading-5 text-[var(--neutral-muted)]">
-                      {isConnecting ? "Waiting for Freighter" : "Stellar browser wallet"}
+                      {isConnecting ? "Waiting for wallet" : "Browser wallet"}
                     </span>
                   </span>
                 </button>
@@ -119,7 +119,7 @@ export const StellarWalletButton = ({
         {shortenAddress(address)}
       </button>
       <Button
-        aria-label="Disconnect Stellar wallet"
+        aria-label="Disconnect wallet"
         color="secondary"
         leftIcon={<ArrowRightOnRectangleIcon className="h-5 w-5" />}
         onClick={() => {
