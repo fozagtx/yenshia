@@ -7,7 +7,7 @@ export const useSendMessage = () => {
 
   const send = async ({ message, sender }: { message: string; sender: string }) => {
     if (!node) {
-      throw new Error("Yenshia is not connected to the real location relay yet.");
+      throw new Error("Private sharing is still starting.");
     }
 
     // Create a message encoder

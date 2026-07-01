@@ -127,6 +127,9 @@ const ShareLocationPage: NextPage = () => {
     isGeolocationEnabled,
     lastSentAt,
     locationError: locationAccessError,
+    relayError: sendRelayError,
+    relayReady: sendRelayReady,
+    relayStatus: sendRelayStatus,
     sendError,
   } = useSendLocation({
     enabled: locationRequested,
@@ -277,7 +280,17 @@ const ShareLocationPage: NextPage = () => {
     );
   }
 
-  const locationError = locationAccessError || sendError || participantIdentityError || derivationError || receiveError;
+  const privateSharingError =
+    !sendRelayReady && (sendRelayStatus === "error" || sendRelayError)
+      ? new Error("Private sharing could not start. Refresh and try again.")
+      : null;
+  const locationError =
+    locationAccessError ||
+    sendError ||
+    privateSharingError ||
+    participantIdentityError ||
+    derivationError ||
+    receiveError;
   const hasOwnLocation = !!coords;
   const hasPeerLocation = !!otherCoords && canSendToPeer;
   const hasLocationPair = hasOwnLocation && hasPeerLocation;
@@ -293,6 +306,8 @@ const ShareLocationPage: NextPage = () => {
     ? "Location is not available in this browser."
     : !isGeolocationEnabled
     ? "Turn on location access."
+    : hasOwnLocation && derivedAccountReady && !sendRelayReady
+    ? "Preparing private sharing."
     : hasLocationPair && hasPublishedLocation
     ? "Both people are sharing location."
     : hasPublishedLocation

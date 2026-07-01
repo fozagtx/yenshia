@@ -18,16 +18,21 @@ export const useSendLocation = ({
 }: UseSendLocationParams) => {
   const { address } = useStellarWallet();
   const { derivedAccount } = useDerivedAccount();
+  const { relayError, relayReady, relayStatus, send } = useSendMessage();
   const canShareLocation =
-    enabled && !!address && !!linkPublicKey && !!participantId && !!recipientPublicKey && !!derivedAccount;
+    enabled &&
+    !!address &&
+    !!linkPublicKey &&
+    !!participantId &&
+    !!recipientPublicKey &&
+    !!derivedAccount &&
+    relayReady;
   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
   const [isGeolocationAvailable, setIsGeolocationAvailable] = useState(true);
   const [isGeolocationEnabled, setIsGeolocationEnabled] = useState(false);
   const [locationError, setLocationError] = useState<Error | null>(null);
   const [sendError, setSendError] = useState<Error | null>(null);
   const [lastSentAt, setLastSentAt] = useState<number | null>(null);
-
-  const { relayError, relayReady, relayStatus, send } = useSendMessage();
 
   useEffect(() => {
     if (!enabled) return;
@@ -74,7 +79,8 @@ export const useSendLocation = ({
       !derivedAccount ||
       !linkPublicKey ||
       !participantId ||
-      !recipientPublicKey
+      !recipientPublicKey ||
+      !relayReady
     )
       return;
 
@@ -119,7 +125,17 @@ export const useSendLocation = ({
       stopped = true;
       clearInterval(intervalId);
     };
-  }, [send, canShareLocation, coords, address, linkPublicKey, participantId, recipientPublicKey, derivedAccount]);
+  }, [
+    send,
+    canShareLocation,
+    coords,
+    address,
+    linkPublicKey,
+    participantId,
+    recipientPublicKey,
+    derivedAccount,
+    relayReady,
+  ]);
 
   return {
     coords,
