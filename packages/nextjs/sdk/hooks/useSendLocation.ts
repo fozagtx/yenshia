@@ -5,14 +5,16 @@ import { generateEncryptionClient, useDerivedAccount } from "~~/sdk/crypto";
 import { useStellarWallet } from "~~/sdk/stellar-wallet";
 
 interface UseSendLocationParams {
+  enabled?: boolean;
   linkPublicKey?: `0x${string}`;
   recipientPublicKey?: `0x${string}`;
 }
 
-export const useSendLocation = ({ linkPublicKey, recipientPublicKey }: UseSendLocationParams) => {
+export const useSendLocation = ({ enabled = true, linkPublicKey, recipientPublicKey }: UseSendLocationParams) => {
   const { address } = useStellarWallet();
   const { derivedAccount } = useDerivedAccount();
-  const canShareLocation = !!address && !!linkPublicKey && !!recipientPublicKey && !!derivedAccount;
+  const canRequestLocation = enabled && !!address && !!linkPublicKey && !!derivedAccount;
+  const canShareLocation = canRequestLocation && !!recipientPublicKey;
   const [sendError, setSendError] = useState<Error | null>(null);
   const [lastSentAt, setLastSentAt] = useState<number | null>(null);
 
@@ -21,13 +23,13 @@ export const useSendLocation = ({ linkPublicKey, recipientPublicKey }: UseSendLo
     positionOptions: {
       enableHighAccuracy: true,
     },
-    suppressLocationOnMount: !canShareLocation,
+    suppressLocationOnMount: !canRequestLocation,
     userDecisionTimeout: 3000,
-    watchPosition: canShareLocation,
+    watchPosition: canRequestLocation,
   });
 
   useEffect(() => {
-    if (!address || !coords || !derivedAccount || !linkPublicKey || !recipientPublicKey) return;
+    if (!canShareLocation || !address || !coords || !derivedAccount || !linkPublicKey || !recipientPublicKey) return;
 
     let stopped = false;
 
@@ -69,7 +71,7 @@ export const useSendLocation = ({ linkPublicKey, recipientPublicKey }: UseSendLo
       stopped = true;
       clearInterval(intervalId);
     };
-  }, [send, coords, address, linkPublicKey, recipientPublicKey, derivedAccount]);
+  }, [send, canShareLocation, coords, address, linkPublicKey, recipientPublicKey, derivedAccount]);
 
   return {
     coords,

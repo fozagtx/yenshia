@@ -104,6 +104,7 @@ const ShareLocationPage: NextPage = () => {
     relayError: sendRelayError,
     sendError,
   } = useSendLocation({
+    enabled: sharingReady,
     linkPublicKey: sharingReady ? publicKey : undefined,
     recipientPublicKey: canSendToPeer ? recipientPublicKey : undefined,
   });
@@ -241,12 +242,12 @@ const ShareLocationPage: NextPage = () => {
     : !isGeolocationAvailable
     ? "Location is not available in this browser."
     : !isGeolocationEnabled
-    ? "Allow location to continue."
+    ? "Turn on location access."
     : hasLocationPair
     ? "Both people are sharing location."
     : hasOwnLocation
     ? "Your location is shared. Waiting for the other person."
-    : "Allow location to start sharing.";
+    : "Waiting for your location.";
 
   return (
     <>
@@ -266,30 +267,32 @@ const ShareLocationPage: NextPage = () => {
           </div>
         )}
 
-        <div className="pointer-events-none absolute inset-x-3 bottom-3 sm:inset-x-4 sm:bottom-4">
-          <div className="pointer-events-auto flex flex-col gap-3 rounded-2xl bg-white/95 p-3 shadow-[var(--shadow-search)] backdrop-blur sm:flex-row sm:items-center sm:justify-between sm:p-4">
-            <p
-              className={
-                locationError
-                  ? "text-sm font-semibold text-[var(--error-red)]"
-                  : "text-sm font-semibold text-[var(--navy)]"
-              }
-            >
-              {proofResult?.success ? "Done." : shareMessage}
-            </p>
-            {hasLocationPair && !proofResult?.success && (
-              <Button
-                className="self-start whitespace-nowrap sm:self-auto"
-                type="button"
-                disabled={isFinishing}
-                loading={isFinishing}
-                onClick={onFinishSharing}
+        {hasOwnLocation && (
+          <div className="pointer-events-none absolute inset-x-3 bottom-3 sm:inset-x-4 sm:bottom-4">
+            <div className="pointer-events-auto flex flex-col gap-3 rounded-2xl bg-white/95 p-3 shadow-[var(--shadow-search)] backdrop-blur sm:flex-row sm:items-center sm:justify-between sm:p-4">
+              <p
+                className={
+                  locationError
+                    ? "text-sm font-semibold text-[var(--error-red)]"
+                    : "text-sm font-semibold text-[var(--navy)]"
+                }
               >
-                Done
-              </Button>
-            )}
+                {proofResult?.success ? "Done." : shareMessage}
+              </p>
+              {hasLocationPair && !proofResult?.success && (
+                <Button
+                  className="self-start whitespace-nowrap sm:self-auto"
+                  type="button"
+                  disabled={isFinishing}
+                  loading={isFinishing}
+                  onClick={onFinishSharing}
+                >
+                  Done
+                </Button>
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </section>
 
       {(finishError || proofResult?.error) && (
