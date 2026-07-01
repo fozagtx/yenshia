@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import type { NextPage } from "next";
@@ -92,15 +91,7 @@ const InvitePage: NextPage = () => {
         </p>
       </div>
 
-      <section className="soft-panel grid gap-4 p-4 md:grid-cols-[0.8fr_1.2fr] md:items-center md:gap-5 md:p-5">
-        <Image
-          src="/illustrations/yenshia-human-location-strip-transparent.png"
-          alt="People sharing a private location link"
-          width={1945}
-          height={808}
-          className="proof-illustration mx-auto w-full max-w-[18rem] md:max-w-[23rem]"
-        />
-
+      <section className="soft-panel mx-auto w-full max-w-2xl p-4 sm:p-5">
         {derivedAccount ? (
           <div className="flex flex-col items-center gap-4 text-center">
             <div className="space-y-2">
@@ -115,7 +106,7 @@ const InvitePage: NextPage = () => {
               <QrCode address={inviteLink} />
             </div>
 
-            <p className="w-full max-w-[28rem] break-words rounded-xl border border-[rgba(189,215,255,0.28)] bg-white/80 p-3 font-mono text-sm text-[var(--navy)]">
+            <p className="w-full break-words rounded-xl border border-[rgba(189,215,255,0.28)] bg-white/80 p-3 font-mono text-sm text-[var(--navy)]">
               {inviteLink}
             </p>
 
@@ -135,8 +126,8 @@ const InvitePage: NextPage = () => {
             </div>
           </div>
         ) : (
-          <div className="flex flex-col justify-center gap-3 text-center md:text-left">
-            <p className="status-pill mx-auto md:mx-0">Private link</p>
+          <div className="mx-auto flex max-w-lg flex-col items-center gap-3 text-center">
+            <p className="status-pill mx-auto">Private link</p>
             <h1 className="font-serif text-3xl text-[var(--navy)] sm:text-4xl">Create a location link</h1>
             <p className="muted-copy max-w-[28rem] leading-7">
               Make one private link for the person you want to share location with.
@@ -144,7 +135,7 @@ const InvitePage: NextPage = () => {
             {derivingAccount && <p className="muted-copy leading-7">Confirm in your wallet.</p>}
             {derivationError && <p className="text-sm text-[var(--error-red)]">{derivationError.message}</p>}
             <Button
-              className="self-center whitespace-nowrap md:self-start"
+              className="self-center whitespace-nowrap"
               disabled={derivingAccount}
               loading={derivingAccount}
               onClick={onCreateInvite}

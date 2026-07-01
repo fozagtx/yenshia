@@ -320,6 +320,16 @@ const ShareLocationPage: NextPage = () => {
     ? "Location is ready. Waiting for the other person."
     : "Waiting for your location.";
   const bottomMessage = proofResult?.success ? "Done." : shareMessage;
+  const privateStatusText = locationError
+    ? "Needs attention"
+    : hasPublishedLocation
+    ? "Sent privately"
+    : hasOwnLocation && derivedAccountReady && !sendRelayReady
+    ? "Preparing"
+    : hasOwnLocation && !derivedAccountReady
+    ? "Preparing"
+    : "Waiting";
+  const peerStatusText = hasPeerLocation ? "Visible on map" : "Waiting for other person";
 
   return (
     <>
@@ -347,7 +357,31 @@ const ShareLocationPage: NextPage = () => {
         )}
 
         {hasOwnLocation && (
-          <div className="pointer-events-none absolute inset-x-2 bottom-2 sm:inset-x-3 sm:bottom-3">
+          <div className="pointer-events-none absolute inset-x-2 top-2 z-20 sm:left-3 sm:right-auto sm:top-3">
+            <div className="pointer-events-auto w-full max-w-sm rounded-xl bg-white/95 p-3 text-[var(--navy)] shadow-[var(--shadow-search)] backdrop-blur">
+              <p className="text-sm font-semibold">Live location</p>
+              <div className="mt-2 grid gap-2 text-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-[var(--neutral-muted)]">Your location</span>
+                  <span className="font-semibold">On map</span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-[var(--neutral-muted)]">Private share</span>
+                  <span className={locationError ? "font-semibold text-[var(--error-red)]" : "font-semibold"}>
+                    {privateStatusText}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-[var(--neutral-muted)]">Other person</span>
+                  <span className="font-semibold">{peerStatusText}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {hasOwnLocation && (
+          <div className="pointer-events-none absolute inset-x-2 bottom-2 z-20 sm:inset-x-3 sm:bottom-3">
             <div className="pointer-events-auto flex flex-col gap-2 rounded-xl bg-white/95 p-2.5 shadow-[var(--shadow-search)] backdrop-blur sm:flex-row sm:items-center sm:justify-between sm:p-3">
               <p
                 className={
