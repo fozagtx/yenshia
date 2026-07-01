@@ -12,6 +12,8 @@ import { useHasMounted } from "~~/hooks/useHasMounted";
 import { useDerivedAccount } from "~~/sdk/crypto";
 import { useStellarWallet } from "~~/sdk/stellar-wallet";
 
+const shortenAddress = (address: string) => `${address.slice(0, 5)}...${address.slice(-4)}`;
+
 const InvitePage: NextPage = () => {
   const router = useRouter();
   const { address } = useStellarWallet();
@@ -32,10 +34,10 @@ const InvitePage: NextPage = () => {
   if (!address) {
     return (
       <>
-        <MetaHeader title="Yenshia | Connect Wallet" />
+        <MetaHeader title="Yenshia | Start" />
         <section className="soft-panel mx-auto max-w-xl space-y-4 p-6 text-center">
-          <p className="status-pill mx-auto">Landing page required</p>
-          <h1 className="font-serif text-4xl text-[var(--navy)]">Connect from the landing page.</h1>
+          <p className="status-pill mx-auto">Start on Yenshia home</p>
+          <h1 className="font-serif text-4xl text-[var(--navy)]">Open Yenshia home first.</h1>
         </section>
       </>
     );
@@ -50,11 +52,17 @@ const InvitePage: NextPage = () => {
     <div className="space-y-6">
       <MetaHeader title="Yenshia | Location Invite" />
 
-      <Link href={"/"} className="inline-flex">
-        <Button className="whitespace-nowrap" color={"secondary"} leftIcon={<ArrowLeftIcon className="h-5 w-5" />}>
-          Back
-        </Button>
-      </Link>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Link href={"/"} className="inline-flex">
+          <Button className="whitespace-nowrap" color={"secondary"} leftIcon={<ArrowLeftIcon className="h-5 w-5" />}>
+            Back
+          </Button>
+        </Link>
+        <p className="status-pill w-fit font-mono">
+          <span className="status-dot" />
+          {shortenAddress(address)}
+        </p>
+      </div>
 
       <section className="soft-panel grid gap-8 p-6 md:grid-cols-[0.8fr_1.2fr] md:p-8">
         <Image

@@ -13,7 +13,7 @@ type StellarWalletContextValue = {
   error: string | undefined;
   isConnecting: boolean;
   isConnected: boolean;
-  connect: () => Promise<void>;
+  connect: () => Promise<string>;
   disconnect: () => Promise<void>;
   showProfile: () => Promise<void>;
   signMessage: (message: string) => Promise<string>;
@@ -21,6 +21,7 @@ type StellarWalletContextValue = {
 };
 
 const TESTNET_NETWORK_PASSPHRASE = "Test SDF Network ; September 2015";
+const WALLET_ADDRESS_STORAGE_KEY = "yenshia.stellar.address";
 
 const StellarWalletContext = createContext<StellarWalletContextValue | null>(null);
 
@@ -50,8 +51,32 @@ const signedMessageToString = (signedMessage: string | Buffer | null) => {
   return typeof signedMessage === "string" ? signedMessage : signedMessage.toString("hex");
 };
 
+const readStoredAddress = () => {
+  if (typeof window === "undefined") return undefined;
+
+  try {
+    return window.localStorage.getItem(WALLET_ADDRESS_STORAGE_KEY) || undefined;
+  } catch {
+    return undefined;
+  }
+};
+
+const storeAddress = (nextAddress: string | undefined) => {
+  if (typeof window === "undefined") return;
+
+  try {
+    if (nextAddress) {
+      window.localStorage.setItem(WALLET_ADDRESS_STORAGE_KEY, nextAddress);
+    } else {
+      window.localStorage.removeItem(WALLET_ADDRESS_STORAGE_KEY);
+    }
+  } catch {
+    // Browser storage can be unavailable in private contexts. Wallet signing still remains the source of truth.
+  }
+};
+
 export const StellarWalletProvider = ({ children }: { children: React.ReactNode }) => {
-  const [address, setAddress] = useState<string | undefined>();
+  const [address, setAddress] = useState<string | undefined>(() => readStoredAddress());
   const [error, setError] = useState<string | undefined>();
   const [isConnecting, setIsConnecting] = useState(false);
 
@@ -75,7 +100,9 @@ export const StellarWalletProvider = ({ children }: { children: React.ReactNode 
         throw new Error("Freighter did not return a Stellar address.");
       }
 
+      storeAddress(access.address);
       setAddress(access.address);
+      return access.address;
     } catch (event) {
       const message = event instanceof Error ? event.message : "Wallet connection was cancelled or unavailable.";
       setError(message);
@@ -87,6 +114,7 @@ export const StellarWalletProvider = ({ children }: { children: React.ReactNode 
 
   const disconnect = useCallback(async () => {
     setError(undefined);
+    storeAddress(undefined);
     setAddress(undefined);
   }, []);
 
@@ -97,7 +125,9 @@ export const StellarWalletProvider = ({ children }: { children: React.ReactNode 
       const freighter = await loadFreighterRuntime();
       const currentAddress = await freighter.getAddress();
       requireFreighterSuccess(currentAddress, "Freighter address refresh failed.");
-      setAddress(currentAddress.address || undefined);
+      const refreshedAddress = currentAddress.address || undefined;
+      storeAddress(refreshedAddress);
+      setAddress(refreshedAddress);
     } catch (event) {
       const message = event instanceof Error ? event.message : "Freighter address refresh failed.";
       setError(message);

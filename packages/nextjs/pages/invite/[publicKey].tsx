@@ -48,10 +48,10 @@ const InvitePage: NextPage = () => {
   if (!address || !isConnected) {
     return (
       <>
-        <MetaHeader title="Yenshia | Connect Wallet" />
+        <MetaHeader title="Yenshia | Start" />
         <section className="soft-panel mx-auto max-w-xl space-y-4 p-6 text-center">
-          <p className="status-pill mx-auto">Landing page required</p>
-          <h1 className="font-serif text-4xl text-[var(--navy)]">Connect from the landing page.</h1>
+          <p className="status-pill mx-auto">Start on Yenshia home</p>
+          <h1 className="font-serif text-4xl text-[var(--navy)]">Open Yenshia home first.</h1>
         </section>
       </>
     );

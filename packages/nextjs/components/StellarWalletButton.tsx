@@ -6,7 +6,7 @@ const shortenAddress = (address: string) => `${address.slice(0, 6)}...${address.
 
 export const StellarWalletButton = ({
   className,
-  label = "Connect wallet",
+  label = "Continue",
   onConnected,
   showError = true,
 }: {

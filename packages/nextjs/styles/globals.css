@@ -34,7 +34,7 @@ html {
   background: var(--bg-gradient);
   background-color: var(--blue-frost);
   overflow-x: hidden;
-  overscroll-behavior: none;
+  overflow-y: auto;
 }
 
 body {
@@ -46,8 +46,7 @@ body {
   font-family: var(--font-sans);
   letter-spacing: 0;
   overflow-x: hidden;
-  overscroll-behavior: none;
-  overscroll-behavior-y: none;
+  overflow-y: auto;
 }
 
 #__next {
@@ -55,7 +54,6 @@ body {
   background: var(--bg-gradient);
   background-attachment: fixed;
   background-color: var(--blue-frost);
-  overscroll-behavior: none;
 }
 
 *,
@@ -174,7 +172,7 @@ p {
     background-color: var(--blue-frost);
     min-height: 100dvh;
     overflow-x: clip;
-    overscroll-behavior: none;
+    overflow-y: visible;
   }
 
   .font-serif {

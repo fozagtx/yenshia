@@ -134,7 +134,7 @@ const LocationSessionPage: NextPage = () => {
   if (!address) {
     return (
       <>
-        <MetaHeader title="Yenshia | Connect Wallet" />
+        <MetaHeader title="Yenshia | Start" />
         <section className="soft-panel mx-auto grid max-w-5xl gap-8 overflow-hidden p-6 md:grid-cols-[0.9fr_1.1fr] md:p-8">
           <Image
             src="/illustrations/yenshia-illustration-invite.png"
@@ -145,8 +145,8 @@ const LocationSessionPage: NextPage = () => {
             className="proof-illustration mx-auto w-full max-w-[24rem]"
           />
           <div className="flex flex-col justify-center gap-4 text-center md:text-left">
-            <p className="status-pill mx-auto md:mx-0">Landing page required</p>
-            <h1 className="font-serif text-4xl text-[var(--navy)]">Connect from the landing page.</h1>
+            <p className="status-pill mx-auto md:mx-0">Start on Yenshia home</p>
+            <h1 className="font-serif text-4xl text-[var(--navy)]">Open Yenshia home first.</h1>
           </div>
         </section>
       </>

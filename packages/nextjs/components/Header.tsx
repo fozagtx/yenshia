@@ -2,6 +2,8 @@ import Link from "next/link";
 import { YenshiaLogo } from "~~/components/YenshiaLogo";
 import { useStellarWallet } from "~~/sdk/stellar-wallet";
 
+const shortenAddress = (address: string) => `${address.slice(0, 5)}...${address.slice(-4)}`;
+
 export const Header = () => {
   const { address } = useStellarWallet();
 
@@ -16,9 +18,9 @@ export const Header = () => {
           {address ? (
             <Link
               href="/invite"
-              className="inline-flex h-10 items-center justify-center rounded-2xl border border-white/20 bg-[image:var(--cta-gradient)] px-3 text-sm font-semibold text-white sm:h-11 sm:px-5"
+              className="inline-flex h-10 items-center justify-center rounded-2xl border border-[rgba(189,215,255,0.45)] bg-white px-3 font-mono text-xs font-semibold text-[var(--navy)] shadow-[var(--shadow-search)] sm:h-11 sm:px-4"
             >
-              App
+              {shortenAddress(address)}
             </Link>
           ) : null}
         </div>

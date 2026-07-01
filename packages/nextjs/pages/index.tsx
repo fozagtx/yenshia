@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import type { NextPage } from "next";
+import { useEffect, useState } from "react";
 import { EnvelopeIcon, MapPinIcon, ShieldCheckIcon } from "@heroicons/react/24/solid";
 import { MetaHeader } from "~~/components/MetaHeader";
 import { StellarWalletButton } from "~~/components/StellarWalletButton";
@@ -40,20 +41,25 @@ const faqs = [
   },
   {
     question: "Where do I start?",
-    answer: "Connect your wallet here, then continue into the session flow.",
+    answer: "Use the main button here, then continue into the session flow.",
   },
 ];
 
 const HomePage: NextPage = () => {
   const router = useRouter();
   const { address } = useStellarWallet();
+  const [continueAfterWallet, setContinueAfterWallet] = useState(false);
   const requestedNextPath =
     typeof router.query.next === "string" && router.query.next.startsWith("/") && !router.query.next.startsWith("//")
       ? router.query.next
       : "/invite";
-  const goToInvite = () => {
+
+  useEffect(() => {
+    if (!continueAfterWallet || !address) return;
+
+    setContinueAfterWallet(false);
     void router.push(requestedNextPath);
-  };
+  }, [address, continueAfterWallet, requestedNextPath, router]);
 
   return (
     <>
@@ -85,7 +91,7 @@ const HomePage: NextPage = () => {
               <StellarWalletButton
                 className="connect-shell landing-connect"
                 label="Connect wallet"
-                onConnected={goToInvite}
+                onConnected={() => setContinueAfterWallet(true)}
                 showError={false}
               />
             )}
