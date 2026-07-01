@@ -130,7 +130,6 @@ const ShareLocationPage: NextPage = () => {
     isGeolocationEnabled,
     lastSentAt,
     locationError: locationAccessError,
-    relayError: sendRelayError,
     relayReady: sendRelayReady,
     relayStatus: sendRelayStatus,
     sendError,
@@ -284,17 +283,7 @@ const ShareLocationPage: NextPage = () => {
     );
   }
 
-  const privateSharingError =
-    !sendRelayReady && (sendRelayStatus === "error" || sendRelayError)
-      ? new Error("Private sharing could not start. Refresh and try again.")
-      : null;
-  const locationError =
-    locationAccessError ||
-    sendError ||
-    privateSharingError ||
-    participantIdentityError ||
-    derivationError ||
-    receiveError;
+  const locationError = locationAccessError || sendError || participantIdentityError || derivationError || receiveError;
   const hasOwnLocation = !!coords;
   const hasPeerLocation = !!otherCoords && canSendToPeer;
   const hasLocationPair = hasOwnLocation && hasPeerLocation;
@@ -340,7 +329,7 @@ const ShareLocationPage: NextPage = () => {
     : hasOwnLocation && !sendRelayReady
     ? sendRelayStatus === "loading"
       ? "Connecting"
-      : "Connection blocked"
+      : "Retrying"
     : hasOwnLocation && !canSendToPeer
     ? "Waiting for peer"
     : hasOwnLocation

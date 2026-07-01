@@ -1,34 +1,30 @@
 import { useQuery } from "@tanstack/react-query";
-import { enrTree, wakuDnsDiscovery } from "@waku/dns-discovery";
-import { wakuPeerExchangeDiscovery } from "@waku/peer-exchange";
 import { Protocols, createLightNode, waitForRemotePeer } from "@waku/sdk";
+
+const RELAY_CONNECT_TIMEOUT_MS = 45000;
+const RELAY_RETRY_DELAY_MS = 5000;
 
 export const useNode = () => {
   return useQuery({
     queryKey: ["waku-node"],
     queryFn: async () => {
-      // Create and start a Light Node
       const node = await createLightNode({
-        defaultBootstrap: false,
-        libp2p: {
-          peerDiscovery: [
-            wakuDnsDiscovery([enrTree["PROD"]], { lightPush: 6, filter: 6, store: 6 }),
-            wakuPeerExchangeDiscovery(),
-          ],
-        },
+        defaultBootstrap: true,
       });
       await node.start();
 
-      await Promise.race([
-        waitForRemotePeer(node, [Protocols.Filter, Protocols.LightPush]),
-        new Promise((_, reject) => {
-          globalThis.setTimeout(() => reject(new Error("Private location relay did not connect.")), 20000);
-        }),
-      ]);
+      try {
+        await waitForRemotePeer(node, [Protocols.Filter, Protocols.LightPush], RELAY_CONNECT_TIMEOUT_MS);
+      } catch (error) {
+        await node.stop().catch(() => undefined);
+        throw error instanceof Error ? error : new Error("Private location relay did not connect.");
+      }
 
       return node;
     },
-    retry: 1,
+    retry: true,
+    retryDelay: RELAY_RETRY_DELAY_MS,
+    refetchOnWindowFocus: false,
     staleTime: Infinity,
   });
 };
