@@ -66,7 +66,7 @@ const HomePage: NextPage = () => {
               Yenshia
             </h1>
             <p className="max-w-[36rem] text-base leading-7 text-[var(--neutral-muted)] sm:text-lg sm:leading-8 md:text-xl md:leading-9">
-              A calm way for two people to share location inside a private session.
+              A private and safe way for two people to share location inside a private session.
             </p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
