@@ -62,6 +62,19 @@ const finishErrorMessage = (message: string) => {
 
 const locationErrorMessage = (message: string) => message;
 
+const createParticipantId = () => {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+
+  if (typeof crypto !== "undefined" && typeof crypto.getRandomValues === "function") {
+    const bytes = crypto.getRandomValues(new Uint8Array(16));
+    return Array.from(bytes, byte => byte.toString(16).padStart(2, "0")).join("");
+  }
+
+  throw new Error("Secure browser identity is not available.");
+};
+
 const ShareLocationPage: NextPage = () => {
   const router = useRouter();
   const routePublicKey = router.query.publicKey?.toString();
@@ -71,13 +84,19 @@ const ShareLocationPage: NextPage = () => {
   const hasMounted = useHasMounted();
   const { address, signTransaction } = useStellarWallet();
   const { derivationError, derivedAccount, derivedAccountReady, deriveAccount, derivingAccount } = useDerivedAccount();
+  const [participantId, setParticipantId] = useState<string | null>(null);
+  const [participantIdentityError, setParticipantIdentityError] = useState<Error | null>(null);
   const [locationRequested, setLocationRequested] = useState(false);
   const shareFromInvite = router.query.share === "1";
   const [proofResult, setProofResult] = useState<SubmitProofApiResponse | null>(null);
-  const sharePageReady = !!address && !!publicKey;
+  const sharePageReady = !!address && !!publicKey && !!participantId && !participantIdentityError;
   const privateSharingReady = sharePageReady && derivedAccountReady;
+  const isInviteParticipant = shareFromInvite;
   const isLinkOwner =
-    !!publicKey && !!derivedAccount && publicKey.toLowerCase() === derivedAccount.publicKey.toLowerCase();
+    !!publicKey &&
+    !!derivedAccount &&
+    !isInviteParticipant &&
+    publicKey.toLowerCase() === derivedAccount.publicKey.toLowerCase();
 
   const {
     coords: otherCoords,
@@ -87,16 +106,20 @@ const ShareLocationPage: NextPage = () => {
     enabled: privateSharingReady,
     expectedSenderPublicKey: isLinkOwner ? undefined : publicKey,
     linkPublicKey: privateSharingReady ? publicKey : undefined,
+    ownParticipantId: participantId ?? undefined,
   });
   const recipientPublicKey = privateSharingReady
     ? isLinkOwner
       ? peerLocation?.senderPublicKey
       : publicKey
     : undefined;
+  const peerParticipantId = peerLocation?.participantId;
   const canSendToPeer =
     !!recipientPublicKey &&
     !!derivedAccount &&
-    recipientPublicKey.toLowerCase() !== derivedAccount.publicKey.toLowerCase();
+    (isInviteParticipant ||
+      !!peerParticipantId ||
+      recipientPublicKey.toLowerCase() !== derivedAccount.publicKey.toLowerCase());
   const {
     coords,
     isGeolocationAvailable,
@@ -105,6 +128,7 @@ const ShareLocationPage: NextPage = () => {
   } = useSendLocation({
     enabled: locationRequested,
     linkPublicKey: publicKey,
+    participantId: participantId ?? undefined,
     recipientPublicKey: canSendToPeer ? recipientPublicKey : undefined,
   });
 
@@ -173,6 +197,18 @@ const ShareLocationPage: NextPage = () => {
   };
 
   useEffect(() => {
+    try {
+      setParticipantId(createParticipantId());
+      setParticipantIdentityError(null);
+    } catch (error) {
+      setParticipantId(null);
+      setParticipantIdentityError(
+        error instanceof Error ? error : new Error("Secure browser identity is not available."),
+      );
+    }
+  }, []);
+
+  useEffect(() => {
     if (hasMounted && router.isReady && publicKey && !address) {
       void router.replace(`/?next=${encodeURIComponent(router.asPath)}`);
     }
@@ -213,7 +249,7 @@ const ShareLocationPage: NextPage = () => {
     );
   }
 
-  const locationError = locationAccessError || receiveError;
+  const locationError = locationAccessError || participantIdentityError || receiveError;
   const hasOwnLocation = !!coords;
   const hasPeerLocation = !!otherCoords && canSendToPeer;
   const hasLocationPair = hasOwnLocation && hasPeerLocation;

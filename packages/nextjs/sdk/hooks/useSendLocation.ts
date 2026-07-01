@@ -6,13 +6,20 @@ import { useStellarWallet } from "~~/sdk/stellar-wallet";
 interface UseSendLocationParams {
   enabled?: boolean;
   linkPublicKey?: `0x${string}`;
+  participantId?: string;
   recipientPublicKey?: `0x${string}`;
 }
 
-export const useSendLocation = ({ enabled = true, linkPublicKey, recipientPublicKey }: UseSendLocationParams) => {
+export const useSendLocation = ({
+  enabled = true,
+  linkPublicKey,
+  participantId,
+  recipientPublicKey,
+}: UseSendLocationParams) => {
   const { address } = useStellarWallet();
   const { derivedAccount } = useDerivedAccount();
-  const canShareLocation = enabled && !!address && !!linkPublicKey && !!recipientPublicKey && !!derivedAccount;
+  const canShareLocation =
+    enabled && !!address && !!linkPublicKey && !!participantId && !!recipientPublicKey && !!derivedAccount;
   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
   const [isGeolocationAvailable, setIsGeolocationAvailable] = useState(true);
   const [isGeolocationEnabled, setIsGeolocationEnabled] = useState(false);
@@ -60,7 +67,16 @@ export const useSendLocation = ({ enabled = true, linkPublicKey, recipientPublic
   }, [enabled]);
 
   useEffect(() => {
-    if (!canShareLocation || !address || !coords || !derivedAccount || !linkPublicKey || !recipientPublicKey) return;
+    if (
+      !canShareLocation ||
+      !address ||
+      !coords ||
+      !derivedAccount ||
+      !linkPublicKey ||
+      !participantId ||
+      !recipientPublicKey
+    )
+      return;
 
     let stopped = false;
 
@@ -69,6 +85,7 @@ export const useSendLocation = ({ enabled = true, linkPublicKey, recipientPublic
         latitude: coords.latitude,
         longitude: coords.longitude,
         linkPublicKey,
+        participantId,
         recipientPublicKey,
         senderPublicKey: derivedAccount.publicKey,
         senderAddress: address,
@@ -102,7 +119,7 @@ export const useSendLocation = ({ enabled = true, linkPublicKey, recipientPublic
       stopped = true;
       clearInterval(intervalId);
     };
-  }, [send, canShareLocation, coords, address, linkPublicKey, recipientPublicKey, derivedAccount]);
+  }, [send, canShareLocation, coords, address, linkPublicKey, participantId, recipientPublicKey, derivedAccount]);
 
   return {
     coords,

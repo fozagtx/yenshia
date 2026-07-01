@@ -10,6 +10,7 @@ type ReceivedLocation = {
   latitude: number;
   longitude: number;
   linkPublicKey: HexPublicKey;
+  participantId: string;
   recipientPublicKey: HexPublicKey;
   senderAddress: string;
   senderPublicKey: HexPublicKey;
@@ -26,6 +27,8 @@ const parseLocationPayload = (payload: unknown): ReceivedLocation | null => {
   if (
     typeof candidate.latitude !== "number" ||
     typeof candidate.longitude !== "number" ||
+    typeof candidate.participantId !== "string" ||
+    candidate.participantId.length === 0 ||
     typeof candidate.senderAddress !== "string" ||
     typeof candidate.sentAt !== "number" ||
     !isHexPublicKey(candidate.linkPublicKey) ||
@@ -46,10 +49,12 @@ export const useReceiveLocation = ({
   enabled = true,
   expectedSenderPublicKey,
   linkPublicKey,
+  ownParticipantId,
 }: {
   enabled?: boolean;
   expectedSenderPublicKey?: HexPublicKey;
   linkPublicKey?: HexPublicKey;
+  ownParticipantId?: string;
 } = {}) => {
   const { data: node, error: relayError, status: relayStatus } = useNode();
   const { derivedAccount } = useDerivedAccount();
@@ -59,7 +64,7 @@ export const useReceiveLocation = ({
   const [receiveError, setReceiveError] = useState<Error | null>(null);
 
   useEffect(() => {
-    if (!enabled || !node || !derivedAccountReady || !derivedAccount || !linkPublicKey) return;
+    if (!enabled || !node || !derivedAccountReady || !derivedAccount || !linkPublicKey || !ownParticipantId) return;
 
     const callback = async (wakuMessage: DecodedMessage) => {
       if (!wakuMessage.payload) return;
@@ -82,7 +87,7 @@ export const useReceiveLocation = ({
         ) {
           return;
         }
-        if (parsedPayload.senderPublicKey.toLowerCase() === derivedAccount.publicKey.toLowerCase()) return;
+        if (parsedPayload.participantId === ownParticipantId) return;
 
         setReceiveError(null);
         setLocation(parsedPayload);
@@ -114,7 +119,16 @@ export const useReceiveLocation = ({
       cancelled = true;
       unsubscribe?.();
     };
-  }, [enabled, node, decryptMessage, derivedAccountReady, derivedAccount, expectedSenderPublicKey, linkPublicKey]);
+  }, [
+    enabled,
+    node,
+    decryptMessage,
+    derivedAccountReady,
+    derivedAccount,
+    expectedSenderPublicKey,
+    linkPublicKey,
+    ownParticipantId,
+  ]);
 
   return {
     coords: location ? { latitude: location.latitude, longitude: location.longitude } : null,
