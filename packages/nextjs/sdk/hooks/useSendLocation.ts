@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSendMessage } from "./useSendMessage";
 import { generateEncryptionClient, useDerivedAccount } from "~~/sdk/crypto";
 import { cleanDisplayName } from "~~/sdk/display-name";
@@ -38,6 +38,7 @@ export const useSendLocation = ({
   const [locationError, setLocationError] = useState<Error | null>(null);
   const [sendError, setSendError] = useState<Error | null>(null);
   const [lastSentAt, setLastSentAt] = useState<number | null>(null);
+  const hasLocationRef = useRef(false);
 
   useEffect(() => {
     if (!enabled) return;
@@ -52,6 +53,7 @@ export const useSendLocation = ({
 
     const watchId = navigator.geolocation.watchPosition(
       position => {
+        hasLocationRef.current = true;
         setIsGeolocationEnabled(true);
         setLocationError(null);
         setSendError(null);
@@ -61,6 +63,12 @@ export const useSendLocation = ({
         });
       },
       error => {
+        if (hasLocationRef.current) {
+          setIsGeolocationEnabled(true);
+          setLocationError(null);
+          return;
+        }
+
         setIsGeolocationEnabled(false);
         setLocationError(error instanceof Error ? error : new Error(error.message || "Location access failed."));
       },

@@ -42,4 +42,5 @@
 - Both map markers use avatar chips instead of generic marker SVGs.
 - Marker labels are based on user-entered names when available.
 - Browser geolocation renders immediately after permission, while the private relay continues real Waku peer discovery and retries encrypted sends until a peer is available.
+- A later browser position-update error must not replace an already received real position with a fatal sharing error.
 - Typecheck and production build pass.
