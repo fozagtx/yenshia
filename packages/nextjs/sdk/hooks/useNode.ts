@@ -19,11 +19,16 @@ export const useNode = () => {
       });
       await node.start();
 
-      // Wait for a successful peer connection
-      await waitForRemotePeer(node, [Protocols.Filter, Protocols.LightPush, Protocols.Store]);
+      await Promise.race([
+        waitForRemotePeer(node, [Protocols.Filter, Protocols.LightPush]),
+        new Promise((_, reject) => {
+          globalThis.setTimeout(() => reject(new Error("Private location relay did not connect.")), 20000);
+        }),
+      ]);
 
       return node;
     },
+    retry: 1,
     staleTime: Infinity,
   });
 };

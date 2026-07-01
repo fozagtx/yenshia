@@ -306,28 +306,40 @@ const ShareLocationPage: NextPage = () => {
     ? "Location is not available in this browser."
     : !isGeolocationEnabled
     ? "Turn on location access."
-    : hasOwnLocation && derivedAccountReady && !sendRelayReady
-    ? "Preparing private sharing."
+    : hasOwnLocation && derivingAccount
+    ? "Confirm in your wallet to share privately."
+    : hasOwnLocation && !derivedAccountReady
+    ? "Wallet confirmation is needed to share privately."
+    : hasOwnLocation && !sendRelayReady
+    ? "Connecting privately."
     : hasLocationPair && hasPublishedLocation
     ? "Both people are sharing location."
     : hasPublishedLocation
     ? "Your location is shared. Waiting for the other person."
-    : hasOwnLocation && derivingAccount
-    ? "Confirm in your wallet to share privately."
-    : hasOwnLocation && !derivedAccountReady
-    ? "Preparing private sharing."
+    : hasOwnLocation && !canSendToPeer && isLinkOwner
+    ? "Your location is on this phone. Waiting for the other person."
+    : hasOwnLocation && !canSendToPeer
+    ? "Waiting for the other person."
     : hasOwnLocation
-    ? "Location is ready. Waiting for the other person."
+    ? "Sending your location privately."
     : "Waiting for your location.";
   const bottomMessage = proofResult?.success ? "Done." : shareMessage;
   const privateStatusText = locationError
     ? "Needs attention"
     : hasPublishedLocation
     ? "Sent privately"
-    : hasOwnLocation && derivedAccountReady && !sendRelayReady
-    ? "Preparing"
+    : hasOwnLocation && derivingAccount
+    ? "Confirm wallet"
     : hasOwnLocation && !derivedAccountReady
-    ? "Preparing"
+    ? "Wallet needed"
+    : hasOwnLocation && !sendRelayReady
+    ? sendRelayStatus === "loading"
+      ? "Connecting"
+      : "Connection blocked"
+    : hasOwnLocation && !canSendToPeer
+    ? "Waiting for peer"
+    : hasOwnLocation
+    ? "Sending"
     : "Waiting";
   const peerStatusText = hasPeerLocation ? "Visible on map" : "Waiting for other person";
 
