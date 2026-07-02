@@ -16,17 +16,19 @@ export default function Document() {
         <meta name="msapplication-tap-highlight" content="no" />
         <meta name="theme-color" content="#BDD7FF" />
 
-        <link rel="apple-touch-icon" href="/images/180.png?v=yenshia-2" />
-        <link rel="apple-touch-icon" sizes="152x152" href="/images/152.png?v=yenshia-2" />
-        <link rel="apple-touch-icon" sizes="167x167" href="/images/167.png?v=yenshia-2" />
-        <link rel="apple-touch-icon" sizes="180x180" href="/images/180.png?v=yenshia-2" />
+        <link rel="apple-touch-icon" href="/images/180.png?v=yenshia-4" />
+        <link rel="apple-touch-icon" sizes="152x152" href="/images/152.png?v=yenshia-4" />
+        <link rel="apple-touch-icon" sizes="167x167" href="/images/167.png?v=yenshia-4" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/images/180.png?v=yenshia-4" />
 
-        <link rel="icon" href="/favicon.ico?v=yenshia-2" sizes="any" />
-        <link rel="icon" type="image/png" sizes="32x32" href="/32.png?v=yenshia-2" />
-        <link rel="icon" type="image/png" sizes="16x16" href="/16.png?v=yenshia-2" />
-        <link rel="manifest" href="/manifest.json" />
-        <link rel="mask-icon" href="/images/safari-pinned-tab.svg?v=yenshia-2" color="#002259" />
-        <link rel="shortcut icon" type="image/png" href="/favicon.png?v=yenshia-2" />
+        <link rel="icon" href="/favicon.ico?v=yenshia-4" sizes="any" />
+        <link rel="icon" type="image/svg+xml" href="/icons/yenshia-icon.svg?v=yenshia-4" />
+        <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=yenshia-4" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/32.png?v=yenshia-4" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/16.png?v=yenshia-4" />
+        <link rel="manifest" href="/manifest.json?v=yenshia-4" />
+        <link rel="mask-icon" href="/images/safari-pinned-tab.svg?v=yenshia-4" color="#002259" />
+        <link rel="shortcut icon" href="/favicon.ico?v=yenshia-4" />
       </Head>
       <body>
         <Main />
