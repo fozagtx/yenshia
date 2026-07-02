@@ -41,6 +41,7 @@
 - QR/link copy includes the creator name.
 - Invite acceptance copy names the inviter.
 - Both map markers use avatar chips instead of generic marker SVGs.
+- The Yenshia header logo must render as crisp vector/HTML branding with no blur filters or scaled SVG text.
 - Each participant visible in a session must have an obvious named marker directly on the map.
 - The live map must show a compact under-map location strip with each visible participant's real latitude/longitude. If the peer coordinate has not arrived from the relay, it must show a waiting state instead of a guessed address or placeholder.
 - The live map must include a compact save action that stores only the real current coordinate snapshot in the user's own browser storage and confirms the local save in the UI.

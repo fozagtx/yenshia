@@ -12,7 +12,7 @@ export const Header = () => {
       <div className="layout-container flex justify-center sm:justify-start">
         <div className="header-base inline-flex w-auto items-center gap-2 px-2 py-1.5 sm:px-3">
           <Link href="/" className="flex min-w-0 items-center" aria-label="Yenshia home">
-            <YenshiaLogo className="h-9 w-[8.25rem] sm:h-10 sm:w-[9rem]" />
+            <YenshiaLogo className="h-9 sm:h-10" />
           </Link>
 
           {address ? (
