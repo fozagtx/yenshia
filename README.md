@@ -2,7 +2,7 @@
 
 private location sharing, stellar wallet sessions, zk location proof.
 
-connect a stellar wallet, create a private location link, share live location with one other person, and keep the session gated by wallet-derived encryption. yenshia never holds your wallet secret key. location sharing uses real browser geolocation, encrypted client-side messages, and no mock relay success.
+connect a stellar wallet, create a private location link, share live location with one other person, and keep the session gated by wallet-derived encryption. yenshia never holds your wallet secret key. location sharing uses real browser geolocation and encrypted client-side messages.
 
 live at [yenshia.vercel.app](https://yenshia.vercel.app/)
 
@@ -18,7 +18,7 @@ use a stellar wallet to open a private two-person location sharing session.
 - show the real latitude/longitude for each visible participant under the map
 - save a visible location snapshot locally in the current browser profile
 - prepare and submit a real soroban verifier call when proof artifacts are provided
-- block proof submission when prover input, proof bytes, signed xdr, rpc config, or verifier contract config is missing
+- require prover input, proof bytes, signed xdr, rpc config, and verifier contract config for proof submission
 
 the current app flow targets private location sharing on stellar testnet with a deployed ultrahonk verifier contract.
 
@@ -34,7 +34,7 @@ the receiving browser listens on the same content topic, decrypts valid messages
 
 saved locations are local-only browser snapshots. they are written to `localStorage` on the current device and are not sent to the relay, stellar, vercel, or the other participant.
 
-for the zk verifier path, the app prepares a stellar transaction that calls the deployed soroban verifier contract with real proof bytes and public inputs. the user still has to sign and submit the real transaction. the app does not create fake proof bytes, fake transaction hashes, or simulated verifier success.
+for the zk verifier path, the app prepares a stellar transaction that calls the deployed soroban verifier contract with real proof bytes and public inputs. the user still has to sign and submit the real transaction.
 
 ## zk math
 
@@ -169,16 +169,6 @@ product requirements: [docs/PRD.md](docs/PRD.md)
 contract notes: [contracts/README.md](contracts/README.md)
 
 circuit inputs: [circuits/yenshia_location/INPUTS.md](circuits/yenshia_location/INPUTS.md)
-
-## privacy and no-fake policy
-
-- no mock locations
-- no generated wallets for live flows
-- no fake proof success
-- no fake transaction hashes
-- no substitute proof data
-- no server-side saved location history
-- missing wallet, geolocation, relay, proof, signed xdr, rpc, or verifier config keeps the relevant flow blocked
 
 ## contributing
 
